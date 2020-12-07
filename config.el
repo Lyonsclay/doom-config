@@ -60,11 +60,7 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-;; (defun save-all ()
-;; (interactive)
-;; (save-some-buffers t))
 
-;; (add-hook 'focus-out-hook 'save-all)
 (add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
 
 (require 'key-chord)
@@ -72,79 +68,43 @@
 (key-chord-define-global "jk" 'evil-normal-state)
 (key-chord-define-global "JK" 'evil-normal-state)
 
-;; (windmove-default-keybindings 'super)
-;; (progn
-;; ;; automatically save buffers associated with files on buffer switch
-;; ;; and on windows switch
-;;         (defadvice switch-to-buffer (before save-buffer-now activate)
-;;         (when buffer-file-name (save-buffer)))
-;;         (defadvice other-window (before other-window-now activate)
-;;         (when buffer-file-name (save-buffer)))
-;;         (defadvice windmove-up (before other-window-now activate)
-;;         (when buffer-file-name (save-buffer)))
-;;         (defadvice windmove-down (before other-window-now activate)
-;;         (when buffer-file-name (save-buffer)))
-;;         (defadvice windmove-left (before other-window-now activate)
-;;         (when buffer-file-name (save-buffer)))
-;;         (defadvice windmove-right (before other-window-now activate)
-;;         (when buffer-file-name (save-buffer)))
-;; )
-
 ;; in elisp file like `this'
 ;; in other files like `this` :smile:
 (after! smartparens
-  (sp-pair "`" "`" :wrap "M-`"))
+  (sp-pair "`" "`" :wrap "M-`")
+  (sp-pair "[" "]" :wrap "M-[")
+  (sp-pair "{" "}" :wrap "M-{")
+  (sp-pair "<" ">" :wrap "M-<")
+  (sp-pair "'" "'" :wrap "M-'")
+  (sp-pair "\"" "\"" :wrap "M-\""))
 
-;; (global-set-key (kbd "M-{") 'insert-pair)
-;; (global-set-key (kbd "M-[") 'insert-pair)
-;; (global-set-key (kbd "M-\"") 'insert-pair)
-;; (global-set-key (kbd "M-'") 'insert-pair)
-;; (global-set-key (kbd "M-(") 'insert-pair)
-;; TODO doesn't work result has single quote at end like `word'
-;; (global-set-key (kbd "M-`") 'insert-pair)
-;; (global-set-key (kbd "M-<") 'insert-pair)
-;; (global-set-key (kbd "M-)") 'delete-pair)
+(map! "M-)" #'sp-unwrap-sexp)
+
 
 ;; (require 'multiple-cursors)
 ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 ;; (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 ;; (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+(
+ ;; after! multiple-cursors
+ map! :leader
+ "c ," #'mc/mark-next-like-this
+ "c ." #'mc/mark-all-like-this
+ "c =" #'mc/mark-all-like-this)
 
-(add-hook 'window-setup-hook #'toggle-frame-fullscreen)
-;; (add-hook 'window-setup-hook #'toggle-frame-fullscreen)
-;; (setq ns-use-native-fullscreen t)
-;; make electric-pair-mode work on more brackets
-;; (setq electric-pair-pairs '(
-;;                              (?\" . ?\")
-;;                             (?\{ . ?\})
-;;                             ) )
 (map! :leader "SPC" #'counsel-M-x)
 (map! :leader "t t" #'treemacs)
-;;
-;;
-;; (add-hook! 'go-mode-hook
-;;            (map! :localleader "x x" #'go-run))
+
 (map! :localleader
       :map go-mode-map
       "x x" #'go-run)
-
-;; (add-hook! 'python-mode-hook
-;;            (map! :localleader "p" #'pipenv-activate))
-
-;; (add-hook! 'python-mode-hook
-;;   (map!
-;;    :localleader "p" #'pipenv-activate
-;;  :localleader "r" #'+python/open-ipython-repl))
-;;
 
 (map! :localleader
       :map python-mode-map
       "p" #'pipenv-activate
       "r" #'+python/open-ipython-repl)
 
-;; TODO add mode specific commands for python
-;; (map! :leader "m s" python-)
 (map! :leader
       "0" #'treemacs-window
       "1" #'winum-select-window-1
@@ -159,20 +119,36 @@
       "w a" #'ace-swap-window)
 
 (defun treemacs-window ()
-      "switch to treemacs; start if not already"
-      (interactive)
-      (if  (string= (treemacs-current-visibility) "visible")
-      (evil-window-move-far-left)
-      (treemacs)))
+  "Switch to treemacs; start if not already running."
+  (interactive)
+  ;; If treemacs has not been run in this session we will
+  ;; fire it up. See below...
+  (unless (fboundp 'treemacs-current-visibility)
+    (progn (message "treemacs is 🔥 ready to go 🦎")
+           (treemacs)))
+  ;; Need to guard against 'treemacs-current-visibility not being defined,
+  ;; which is only exposed after the first time treemacs is called.
+  ;;
+  ;; 'condition-case is equivalent to try/catch in other languages.
+  (condition-case nil
+      (if (string= (treemacs-current-visibility) "visible")
+        (evil-window-top-left)
+        (treemacs))
+    (error nil)))
+
 
 (defun go-run ()
-  "go run"
+  "Compile and run buffer."
   (interactive)
   (shell-command (format "go run %s" (buffer-file-name))))
 
-(defun mountain ()
-  "Shifting"
-  (message "me is good"))
+;; Start in fullscreen mode. NOTE with the brew railwaycat/emacs-app install
+;; the ns-use-native-fullscreen flag has no effect
+(add-hook 'window-setup-hook #'toggle-frame-fullscreen)
+;; (setq ns-use-native-fullscreen nil)
+;; (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode)
+
+
 
 ;;
 ;;;

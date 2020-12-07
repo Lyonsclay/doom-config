@@ -42,7 +42,7 @@
 *** (SPC m e e) eval-last-sexp     🐘
 *** (SPC t t) treemacs             🌈
 *** (SPC t m) minimap-mode         ⛑
-*** (SPC h t) load-theme           👜
+*** (SPC h t) load-theme           🍆
 *** (SPC o t) vterm-here           🥑
 
 * Prerequisites
@@ -59,3 +59,15 @@
 
 * Troubleshooting
 # Common issues and their solution, or places to look for help.
+
+* Episode 1
+Test driving Doom emacs 🎏
+** `doom doctor`  👜
+Doom comes with a command line interface that is quite nice and enables an easy upgrade experience.
+** `doom sync` 🙋🏾 
+This command will add/remove packages and update all conigs.
+** Migrating from spacemacs. ❇ 
+I did not expect to move completely as quick as I did after first looking at doom. The UX is phenomenal and makes me an immediate fan. I see three important aspects that make this product great!
+a. It looks great.
+b. The configuration is well organized and facilitates uprade and down grade scenarios. I need to experience the ecosystem through some upgrades before I can't really comment on that aspect of doom. But I can say that having designated files and code patterns which separate private config and user installed packaeges from framework packages and their configs.
+   

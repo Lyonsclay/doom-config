@@ -50,4 +50,7 @@
 ;(unpin! t)
 
 (package! key-chord)
-(string= (treemacs-current-visibility) "visible")
+
+;; (package! aggressive-indent)
+
+(package! command-log-mode)
