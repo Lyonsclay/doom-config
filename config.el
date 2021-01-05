@@ -63,13 +63,14 @@
 
 (add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
 
+
 (require 'key-chord)
 (key-chord-mode t)
 (key-chord-define-global "jk" 'evil-normal-state)
 (key-chord-define-global "JK" 'evil-normal-state)
 
 ;; in elisp file like `this'
-;; in other files like `this` :smile:
+;; in other files like `this` 😜
 (after! smartparens
   (sp-pair "`" "`" :wrap "M-`")
   (sp-pair "[" "]" :wrap "M-[")
@@ -80,18 +81,11 @@
 
 (map! "M-)" #'sp-unwrap-sexp)
 
-
-;; (require 'multiple-cursors)
-;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-;; (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-;; (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-(
- ;; after! multiple-cursors
- map! :leader
- "c ," #'mc/mark-next-like-this
- "c ." #'mc/mark-all-like-this
- "c =" #'mc/mark-all-like-this)
+;; multiple cursor quick edit commands
+(map!
+ "C-?" #'mc/mark-all-like-this
+ "C->" #'mc/mark-next-like-this
+ "C-<" #'mc/mark-previous-like-this)
 
 (map! :leader "SPC" #'counsel-M-x)
 (map! :leader "t t" #'treemacs)
@@ -104,6 +98,10 @@
       :map python-mode-map
       "p" #'pipenv-activate
       "r" #'+python/open-ipython-repl)
+
+(map! :localleader
+      :map lisp-mode-map
+  "f" #'indent-pp-sexp)
 
 (map! :leader
       "0" #'treemacs-window
@@ -118,9 +116,70 @@
       "9" #'winum-select-window-9
       "w a" #'ace-swap-window)
 
+(map! :leader
+      "v" #'toggle-presentation
+      "l" #'toggle-log-keys
+      "y" #'copy-path)
+
+(defun presentation ()
+  "Global command-log mode and buffer setup."
+  (interactive)
+  (toggle-frame-fullscreen)
+  (set-frame-size (selected-frame) 210 60)
+  (doom-big-font-mode)
+  ;; (setq command-log-mode-window-size 185)
+  (toggle-log-keys)
+  (treemacs-window)
+)
+
+(defun working ()
+  "This will hopefully reset the choices from presentation mode."
+  (interactive)
+  (message "get working 🏃🏻 💻 💰")
+  (toggle-frame-fullscreen)
+  (toggle-log-keys)
+  (doom-big-font-mode 0))
+
+
+(defun toggle-presentation ()
+  "Switch between presentation and working views. This will set the variable presentation-view and avert any error when undefined."
+  (interactive)
+  (condition-case nil
+  (if presentation-view
+      (progn (working) (setq presentation-view nil))
+    (progn (presentation) (setq presentation-view t))
+    )
+  (error (progn (presentation) (setq presentation-view t))))
+)
+
+;; Got this from the internet -
+;; - an issue in keycast repo -
+;; someone pasted this code specific to working in doom.
+(after! keycast
+  (define-minor-mode keycast-mode
+    "Show current command and its key binding in the mode line."
+    :global t
+    (if keycast-mode
+        (add-hook 'pre-command-hook 'keycast-mode-line-update t)
+      (remove-hook 'pre-command-hook 'keycast-mode-line-update))))
+(add-to-list 'global-mode-string '("" mode-line-keycast))
+
+(defun toggle-log-keys ()
+  "Send all keystrokes to dedicated buffer."
+  (interactive)
+  (command-log-mode)
+  (global-command-log-mode)
+  (clm/toggle-command-log-buffer)
+  )
+
+;; Is this the best place for this declaration? 🌛
+;; It would be better if this was dynamic based on longest project name.
+;; (setq treemacs-width 35)
+;; 🌶🌶🌶
 (defun treemacs-window ()
   "Switch to treemacs; start if not already running."
   (interactive)
+
   ;; If treemacs has not been run in this session we will
   ;; fire it up. See below...
   (unless (fboundp 'treemacs-current-visibility)
@@ -136,19 +195,68 @@
         (treemacs))
     (error nil)))
 
-
+;; ﷽
 (defun go-run ()
   "Compile and run buffer."
   (interactive)
-  (shell-command (format "go run %s" (buffer-file-name))))
 
-;; Start in fullscreen mode. NOTE with the brew railwaycat/emacs-app install
-;; the ns-use-native-fullscreen flag has no effect
+  ;; (let (filename-callee (buffer-file-name)))
+  ;; (message filename-callee)
+  ;; (shell-command "touch '#go#run#session'")
+
+  ;; (evil-delete-buffer "#go#run#session")
+  (if (get-buffer "#go#run#session")(evil-delete-buffer "#go#run#session"))
+  (generate-new-buffer "#go#run#session")
+
+  ;; (buffer-disable-undo "#go#run#session")
+  ;; (get-buffer "#go#run#session")
+  ;; (unless nil (error "Whoops!"))
+  (shell-command (format "go run %s > '#go#run#session'" (buffer-file-name)))
+  (defvar go-run-path (concat (file-name-directory buffer-file-name) "#go#run#session"))
+  (display-buffer
+   (find-file-noselect go-run-path)
+   ;; '((display-buffer-below-selected display-buffer-at-bottom)
+   '(
+     (display-buffer-reuse-window)
+     ;; (display-buffer-below-selected)
+     (display-buffer-in-direction "right")
+     ;; alist - '(right)
+     ;; (window-height . fit-window-to-buffer)
+     ))
+  )
+
+;; List of all key bindings for current buffer/mode.
+;; (counsel--descbinds-cands)
+;;
+
+(defun copy-path ()
+  "Copy current file path to kill ring and os/gui clipboard."
+  (interactive)
+  (kill-new buffer-file-name)
+  (insert buffer-file-name))
+
+;; Start in fullscreen mode.
 (add-hook 'window-setup-hook #'toggle-frame-fullscreen)
-;; (setq ns-use-native-fullscreen nil)
+;; NOTE with the brew railwaycat/emacs-app install
+;; the ns-use-native-fullscreen flag has no effect
+;; ;; (setq ns-use-native-fullscreen nil)
+
+;; This package works nicely! I am currently trying to forgo this particular tool and rely on
+;; built in auto indenting. But still there is a use case and I might go back. 🏃
 ;; (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode)
 
+;; Using after! instead of mode-hook avoids calling the window size function more than once 🚅
+;; (add-hook 'command-log-mode-hook #'(lambda () (setq command-log-mode-window-size 60)))
+(after! command-log-mode
+  (setq command-log-mode-window-size 50))
 
+;; .venv directory contains all imported packages so it should not be watched by lsp.
+(add-hook 'lsp-mode-hook #'(lambda () (push "/\\.venv$" lsp-file-watch-ignored)))
+;; (redisplay)
+;; (setq mytimer (run-with-timer 10 20 'bleep))
 
-;;
+;; (defun bleep ()
+;;   "A simple message notification to test mytimer :)"
+;;   (message "haiku maiku when I went to raiku -- in the rain."))
+;
 ;;;

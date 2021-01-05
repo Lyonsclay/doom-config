@@ -54,3 +54,5 @@
 ;; (package! aggressive-indent)
 
 (package! command-log-mode)
+(package! keycast)
+(package! reason-mode)
