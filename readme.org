@@ -120,5 +120,3 @@ Or alternatively in:
 
 # when installing the latest ipython the package jedi needs to be deprecated to <0.18
 # in order to enable tab completion in the terminal.
-
-conda install 'jedi<0.18'
