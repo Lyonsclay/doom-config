@@ -48,7 +48,7 @@
 ;; - `load!' for loading external *.el files relative to this one
 ;; - `use-package!' for configuring packages
 ;; - `after!' for running code after a package has loaded
-;; - `add-load-path!' for adding directories to the `load-path', relative to
+;; - `add-load-path!' for adding directories to the `loadEWath', relative to
 ;;   this file. Emacs searches the `load-path' when you load packages with
 ;;   `require' or `use-package'.
 ;; - `map!' for binding new keys
@@ -61,47 +61,9 @@
 ;; they are implemented.
 
 
-(add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
+;; ----------------------------------------------------------------------------
+;;
 
-
-(require 'key-chord)
-(key-chord-mode t)
-(key-chord-define-global "jk" 'evil-normal-state)
-(key-chord-define-global "JK" 'evil-normal-state)
-
-;; in elisp file like `this'
-;; in other files like `this` 😜
-(after! smartparens
-  (sp-pair "`" "`" :wrap "M-`")
-  (sp-pair "[" "]" :wrap "M-[")
-  (sp-pair "{" "}" :wrap "M-{")
-  (sp-pair "<" ">" :wrap "M-<")
-  (sp-pair "'" "'" :wrap "M-'")
-  (sp-pair "\"" "\"" :wrap "M-\""))
-
-(map! "M-)" #'sp-unwrap-sexp)
-
-;; multiple cursor quick edit commands
-(map!
- "C-?" #'mc/mark-all-like-this
- "C->" #'mc/mark-next-like-this
- "C-<" #'mc/mark-previous-like-this)
-
-(map! :leader "SPC" #'counsel-M-x)
-(map! :leader "t t" #'treemacs)
-
-(map! :localleader
-      :map go-mode-map
-      "x x" #'go-run)
-
-(map! :localleader
-      :map python-mode-map
-      "p" #'pipenv-activate
-      "r" #'+python/open-ipython-repl)
-
-(map! :localleader
-      :map lisp-mode-map
-  "f" #'indent-pp-sexp)
 
 (map! :leader
       "0" #'treemacs-window
@@ -116,11 +78,243 @@
       "9" #'winum-select-window-9
       "w a" #'ace-swap-window)
 
+
+;; multiple cursor quick edit commands
+(map!
+ "C-/" #'mc/mark-all-like-this
+ "C->" #'mc/mark-next-like-this
+ "C-<" #'mc/mark-previous-like-this
+ "M-)" #'sp-unwrap-sexp)
+
+
 (map! :leader
+      "SPC" #'counsel-M-x
+      "t t" #'treemacs
+      "t s" #'toggle-center-scroll
       "v" #'toggle-presentation
       "l" #'toggle-log-keys
       "y" #'copy-path)
 
+
+(require 'key-chord)
+(key-chord-mode t)
+(key-chord-define-global "jk" 'jkpop)
+(key-chord-define-global "jk" 'jkpop)
+(key-chord-define-global "ii" 'caps-lock-mode)
+(key-chord-define-global "iu" 'upcase-word)
+
+
+;; RESTORE ctrl-D
+(define-key evil-insert-state-map   (kbd "C-d") #'evil-delete-char)
+(define-key evil-normal-state-map   (kbd "C-d") #'evil-delete-char)
+
+
+;; in elisp file like `this'
+;; in other files like `this` 😜
+(after! smartparens
+  (sp-pair "`" "`" :wrap "M-`")
+  (sp-pair "[" "]" :wrap "M-[")
+  (sp-pair "{" "}" :wrap "M-{")
+  (sp-pair "<" ">" :wrap "M-<")
+  (sp-pair "'" "'" :wrap "M-'")
+  (sp-pair "\"" "\"" :wrap "M-\""))
+
+
+(map! :localleader
+      :map go-mode-map
+      "f" #'gofmt
+      "x" #'go-run)
+
+(map! :localleader
+      :map python-mode-map
+      "p" #'pipenv-activate
+      "r" #'+python/open-ipython-repl)
+
+(map! :localleader
+      :map sql-mode-map
+      "c" #'sql-connect
+      "r" #'sql-set-sqli-buffer
+      "ee" #'sql-send-paragraph)
+
+(map! :localleader
+      :map emacs-lisp-mode-map
+      "f" #'indent-pp-sexp)
+
+;; --------------------------------------------------------------------------
+;; --- global state management -------
+(add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
+
+;; Is this the best place for this declaration? 🌛
+;; It would be better if this was dynamic based on longest project name.
+;; (setq treemacs-width 35)
+;; 🌶🌶🌶
+(defun treemacs-window ()
+  "Switch to treemacs; start if not already running."
+  (interactive)
+
+  ;; If treemacs has not been run in this session we will
+  ;; fire it up. See below...
+  (unless (fboundp 'treemacs-current-visibility)
+    (progn (message "treemacs is 🔥 ready to go 🦎")
+           (treemacs)))
+
+  ;; Need to guard against 'treemacs-current-visibility not being defined,
+  ;; which is only exposed after the first time treemacs is called.
+  ;;
+  ;; 'condition-case' is being used like try/catch.
+  (condition-case nil
+      (if (string= (treemacs-current-visibility) "visible")
+        (evil-window-top-left)
+        (treemacs))
+    (error nil)))
+
+(defun jkpop ()
+  "Automatically sitch out of caps-lock-mode while returning
+to normal state."
+  (interactive)
+  (evil-normal-state)
+  (if caps-lock-mode
+      (progn (command-execute 'caps-lock-mode) (message "👼 CAPS-LOCK 👼")))
+  )
+
+;; (setq scroll-preserve-screen-position t
+(defun toggle-center-scroll ()
+  (interactive)
+  (if (> scroll-margin 0) (center-scroll-off)(center-scroll-on)))
+
+(defun center-scroll-on ()
+  (interactive)
+  (setq scroll-conservatively 0
+        maximum-scroll-margin 0.5
+        scroll-margin 99999)
+  )
+
+(defun center-scroll-off ()
+  ;; Set the default values
+  (interactive)
+  (setq
+      scroll-conservatively 101
+      maximum-scroll-margin 0.25
+      scroll-margin 0)
+  )
+
+;; List of all key bindings for current buffer/mode.
+;; (counsel--descbinds-cands)
+;;
+
+(defun copy-path ()
+  "Copy current file path to kill ring and os/gui clipboard."
+  (interactive)
+  (kill-new buffer-file-name)
+  (insert buffer-file-name))
+
+;; I snagged this from treemacs-mode.el.
+;; This is part of the init routine. I hope that this will reset the cursor if bound
+;; to an interactive function.
+(defun reset-treemacs-cursor ()
+  (interactive)
+(when (boundp 'evil-treemacs-state-cursor)
+    (with-no-warnings
+      (setq evil-treemacs-state-cursor
+            (if treemacs-show-cursor
+                evil-motion-state-cursor
+              '(hbar . 0))))))
+
+;; This really sucks but with the emacs-plus build its all I can
+;; figure out at the moment,
+(setq ns-use-native-fullscreen nil)
+(add-hook 'window-setup-hook #'toggle-frame-fullscreen)
+(add-hook 'emacs-startup-hook #'toggle-frame-fullscreen)
+(toggle-frame-fullscreen)
+
+
+;; ------------------------------------------------------------------------
+;; ---- mode specific functions ------------
+
+;; .venv directory contains all imported packages so it should not be watched by lsp.
+;; (add-hook 'lsp-mode-hook #'(lambda () (push "/\\.venv$" lsp-file-watch-ignored)))
+
+(defun conda-repl ()
+  "Open an IPython REPL."
+  (interactive)
+  (require 'python)
+
+ (shell-command "conda init zsh && conda activate")
+  (let ((python-shell-interpreter "/Users/clay/miniconda3/bin/ipython")
+        (python-shell-interpreter-args
+         (string-join (cdr +python-ipython-command) " ")))
+ (+python/open-repl)))
+
+;; (after! go-mode
+;;               (remove-hook 'go-mode-hook 'gofmt))
+;; ﷽
+(defun go-run ()
+  "Compile and run buffer."
+  (interactive)
+
+  (if (get-buffer "#go#run#session")(evil-delete-buffer "#go#run#session"))
+  (generate-new-buffer "#go#run#session")
+
+  (shell-command (format "go run %s 2> '#go#run#session' > '#go#run#session'" (buffer-file-name)))
+  (shell-command "go tool pprof --text cpu.pprof >> '#go#run#session'")
+
+  (defvar go-run-path (concat (file-name-directory buffer-file-name) "#go#run#session"))
+  (display-buffer
+   (find-file-noselect go-run-path)
+   '(
+     (display-buffer-reuse-window)
+     (display-buffer-in-direction "right")
+     ))
+  )
+
+;; clay add on to sql mode
+;;
+ (add-hook 'sql-login-hook 'clay-sql-login-hook)
+ (defun clay-sql-login-hook ()
+   "Custom SQL log-in behaviours. See `sql-login-hook'."
+   ;; n.b. If you are looking for a response and need to parse the
+   ;; response, use `sql-redirect-value' instead of `comint-send-string'.
+   (interactive)
+   ;; (let ((proc (get-buffer-process (current-buffer))))
+   (message "something sql gonna light up -->>   🚀🚀🚀🚀 ")
+     ;; Output each query before executing it. (n.b. this also avoids
+     ;; the psql prompt breaking the alignment of query results.)
+     ;; remote server needs this
+   (comint-send-string sql-buffer "\\set ECHO queries\n")
+   (comint-send-string sql-buffer "\\timing\n"))
+
+(add-hook 'sql-mode-hook #'sqlup-mode)
+(add-hook 'sql-mode-hook #'(lambda () (message "🖐🏽 configging sql for action 🐲")))
+
+;; https://emacs.stackexchange.com/a/16692
+;;
+(defun sql-add-newline-first (output)
+   "Add newline to beginning of OUTPUT for `comint-preoutput-filter-functions'"
+  (concat "\n" output))
+
+(defun sqli-add-hooks ()
+  "Add hooks to `sql-interactive-mode-hook'."
+  (add-hook 'comint-preoutput-filter-functions
+            'sql-add-newline-first))
+
+(add-hook 'sql-interactive-mode-hook 'sqli-add-hooks)
+
+(setq sql-connection-alist
+      '((districts (sql-product 'postgres)
+                  ;; (sql-port 5432)
+                  (sql-server "localhost")
+                  (sql-user "clay")
+                  ;; (sql-password "password")
+                  (sql-database "districts"))
+        (yf-bi (sql-product 'postgres)
+                  ;; (sql-port 5432)
+                  (sql-server "10.0.1.102")
+                  (sql-user "postgres")
+                  (sql-database "yf-bi"))))
+
+;; --------------------------------------------------------------------------------
+;; presentation related setup config
+;;
 (defun presentation ()
   "Global command-log mode and buffer setup."
   (interactive)
@@ -130,7 +324,7 @@
   ;; (setq command-log-mode-window-size 185)
   (toggle-log-keys)
   (treemacs-window)
-)
+  )
 
 (defun working ()
   "This will hopefully reset the choices from presentation mode."
@@ -172,91 +366,9 @@
   (clm/toggle-command-log-buffer)
   )
 
-;; Is this the best place for this declaration? 🌛
-;; It would be better if this was dynamic based on longest project name.
-;; (setq treemacs-width 35)
-;; 🌶🌶🌶
-(defun treemacs-window ()
-  "Switch to treemacs; start if not already running."
-  (interactive)
-
-  ;; If treemacs has not been run in this session we will
-  ;; fire it up. See below...
-  (unless (fboundp 'treemacs-current-visibility)
-    (progn (message "treemacs is 🔥 ready to go 🦎")
-           (treemacs)))
-  ;; Need to guard against 'treemacs-current-visibility not being defined,
-  ;; which is only exposed after the first time treemacs is called.
-  ;;
-  ;; 'condition-case is equivalent to try/catch in other languages.
-  (condition-case nil
-      (if (string= (treemacs-current-visibility) "visible")
-        (evil-window-top-left)
-        (treemacs))
-    (error nil)))
-
-;; ﷽
-(defun go-run ()
-  "Compile and run buffer."
-  (interactive)
-
-  ;; (let (filename-callee (buffer-file-name)))
-  ;; (message filename-callee)
-  ;; (shell-command "touch '#go#run#session'")
-
-  ;; (evil-delete-buffer "#go#run#session")
-  (if (get-buffer "#go#run#session")(evil-delete-buffer "#go#run#session"))
-  (generate-new-buffer "#go#run#session")
-
-  ;; (buffer-disable-undo "#go#run#session")
-  ;; (get-buffer "#go#run#session")
-  ;; (unless nil (error "Whoops!"))
-  (shell-command (format "go run %s > '#go#run#session'" (buffer-file-name)))
-  (defvar go-run-path (concat (file-name-directory buffer-file-name) "#go#run#session"))
-  (display-buffer
-   (find-file-noselect go-run-path)
-   ;; '((display-buffer-below-selected display-buffer-at-bottom)
-   '(
-     (display-buffer-reuse-window)
-     ;; (display-buffer-below-selected)
-     (display-buffer-in-direction "right")
-     ;; alist - '(right)
-     ;; (window-height . fit-window-to-buffer)
-     ))
-  )
-
-;; List of all key bindings for current buffer/mode.
-;; (counsel--descbinds-cands)
-;;
-
-(defun copy-path ()
-  "Copy current file path to kill ring and os/gui clipboard."
-  (interactive)
-  (kill-new buffer-file-name)
-  (insert buffer-file-name))
-
-;; Start in fullscreen mode.
-(add-hook 'window-setup-hook #'toggle-frame-fullscreen)
-;; NOTE with the brew railwaycat/emacs-app install
-;; the ns-use-native-fullscreen flag has no effect
-;; ;; (setq ns-use-native-fullscreen nil)
-
-;; This package works nicely! I am currently trying to forgo this particular tool and rely on
-;; built in auto indenting. But still there is a use case and I might go back. 🏃
-;; (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode)
-
 ;; Using after! instead of mode-hook avoids calling the window size function more than once 🚅
 ;; (add-hook 'command-log-mode-hook #'(lambda () (setq command-log-mode-window-size 60)))
 (after! command-log-mode
   (setq command-log-mode-window-size 50))
 
-;; .venv directory contains all imported packages so it should not be watched by lsp.
-(add-hook 'lsp-mode-hook #'(lambda () (push "/\\.venv$" lsp-file-watch-ignored)))
-;; (redisplay)
-;; (setq mytimer (run-with-timer 10 20 'bleep))
 
-;; (defun bleep ()
-;;   "A simple message notification to test mytimer :)"
-;;   (message "haiku maiku when I went to raiku -- in the rain."))
-;
-;;;

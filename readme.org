@@ -11,20 +11,22 @@
     - [[#private][private]]
   - [[#goto-commands][Goto Commands]]
     - [[#spc-i-e-emojify-insert-emoji-][(SPC i e) emojify-insert-emoji 🐳]]
-    - [[#spc-m-e-e-eval-last-sexp-----][(SPC m e e) eval-last-sexp     🐘]]
-    - [[#spc-t-t-treemacs-------------][(SPC t t) treemacs             🌈]]
-    - [[#spc-t-m-minimap-mode---------][(SPC t m) minimap-mode         ⛑]]
+    - [[#spc-m-e-e-eval-last-sexp-----][(SPC m e e) eval-last-sexp     🥑]]
+    - [[#spc-t-t-treemacs-------------][(SPC t t) treemacs             ⛑]]
+    - [[#spc-t-m-minimap-mode---------][(SPC t m) minimap-mode         🐘]]
     - [[#spc-h-t-load-theme-----------][(SPC h t) load-theme           🍆]]
-    - [[#spc-o-t-vterm-here-----------][(SPC o t) vterm-here           🥑]]
+    - [[#spc-o-t-vterm-here-----------][(SPC o t) vterm-here           🌈]]
 - [[#prerequisites][Prerequisites]]
 - [[#features][Features]]
 - [[#configuration][Configuration]]
 - [[#troubleshooting][Troubleshooting]]
+- [[#tips][Tips]]
 - [[#episode-1][Episode 1]]
   - [[#doom-doctor--][`doom doctor`  👜]]
   - [[#doom-sync-][`doom sync` 🙋🏾]]
   - [[#migrating-from-spacemacs-][Migrating from spacemacs. ❇]]
   - [[#live-coding-todos-][Live coding TODOS. 🗒]]
+  - [[#general-assesment][General Assesment]]
 - [[#future-episode-topics][Future Episode Topics]]
   - [[#setup-sql-driver][Setup sql driver]]
 
@@ -78,6 +80,7 @@ This command will add/remove packages and update all conigs.
 ** Migrating from spacemacs. ❇ 
 I did not expect to move completely as quick as I did after first looking at doom. The UX is phenomenal and makes me an immediate fan. I see three important aspects that make this product great!
 a. It looks great.
+   ** so many subtle refinements
 b. The configuration is well organized and facilitates uprade and down grade scenarios. I need to experience the ecosystem through some upgrades before I can't really comment on that aspect of doom. But I can say that having designated files and code patterns which separate private config and user installed packaeges from framework packages and their configs.
 c. Adding go-run function.
 ** Live coding TODOS. 🗒
@@ -98,5 +101,24 @@ Doom promotes higher level configuration macros ->
 * Future Episode Topics
 ** Setup sql driver
 0:01:44 
-0:01:33 
+0:01:33
+
+# This popped up when visting a python file.
   
+Warning (python): Python shell prompts cannot be detected.
+If your emacs session hangs when starting python shells
+recover with ‘keyboard-quit’ and then try fixing the
+interactive flag for your interpreter by adjusting the
+‘python-shell-interpreter-interactive-arg’ or add regexps
+matching shell prompts in the directory-local friendly vars:
+  + ‘python-shell-prompt-regexp’
+  + ‘python-shell-prompt-block-regexp’
+  + ‘python-shell-prompt-output-regexp’
+Or alternatively in:
+  + ‘python-shell-prompt-input-regexps’
+  + ‘python-shell-prompt-output-regexps’
+
+# when installing the latest ipython the package jedi needs to be deprecated to <0.18
+# in order to enable tab completion in the terminal.
+
+conda install 'jedi<0.18'

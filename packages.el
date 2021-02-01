@@ -54,5 +54,7 @@
 ;; (package! aggressive-indent)
 
 (package! command-log-mode)
-(package! keycast)
 (package! reason-mode)
+(package! csv-mode)
+(package! caps-lock)
+(package! sqlup-mode)
