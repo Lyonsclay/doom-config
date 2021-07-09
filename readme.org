@@ -83,7 +83,7 @@ a. It looks great.
    ** so many subtle refinements
 b. The configuration is well organized and facilitates uprade and down grade scenarios. I need to experience the ecosystem through some upgrades before I can't really comment on that aspect of doom. But I can say that having designated files and code patterns which separate private config and user installed packaeges from framework packages and their configs.
 c. Adding go-run function.
-** Live coding TODOS. 🗒
+** Live coding TODOS. 🇬🇳
 a. Add a keymap for common activity. (make vterm far right or make magit window far right)
 b. Decide keys for multiple-cursors.
 b. Record setup for project.
@@ -92,7 +92,7 @@ d. Add :localleader mapped commands to gorepl.
    Restart go-repl.
 e. PR for window-move-very-far-right
 
-** General Assesment
+** General Assesment 🇬🇼
 Migrating to Doom has caused me to take my emacs-elisp to the next level. This is most likely a result of feature loss.
 
 Doom promotes higher level configuration macros ->  
@@ -105,18 +105,28 @@ Doom promotes higher level configuration macros ->
 
 # This popped up when visting a python file.
   
-Warning (python): Python shell prompts cannot be detected.
-If your emacs session hangs when starting python shells
-recover with ‘keyboard-quit’ and then try fixing the
-interactive flag for your interpreter by adjusting the
-‘python-shell-interpreter-interactive-arg’ or add regexps
-matching shell prompts in the directory-local friendly vars:
-  + ‘python-shell-prompt-regexp’
-  + ‘python-shell-prompt-block-regexp’
-  + ‘python-shell-prompt-output-regexp’
-Or alternatively in:
-  + ‘python-shell-prompt-input-regexps’
-  + ‘python-shell-prompt-output-regexps’
 
 # when installing the latest ipython the package jedi needs to be deprecated to <0.18
 # in order to enable tab completion in the terminal.
+
+
+-- tips and trics
+-- --
+-- --
+-- --
+-- --
+1. ibuffer - is an easy way to delete any buffer from current window.
+   To delete a buffer navigate to it in the list(popup window) user j/k,
+   then ender 'd' - label line for deleting. 'x' confirms deleting buffers that
+   have been designated with a 'd' delete on their respective line.
+   I can't figure out how to display the list of actions and keystrokes. TODO
+
+2. clone-indirect-buffer (SPC b c) and clone-indirect-buffer-other-window (SPC b C) can create a second buffer of a particular file. I am not sure the operational difference of the two. My use case is to have two windows of the same file, but have one completely collapsed showing the function names. Note - you can achieve a similar effect by using treemacs and hitting tab. This might be usefull in setting up two database clients from the same file. I do this often when pulling data from a remote database and storing results in my own local database for further analysis.
+
+3. treemacs-peek (P) from the treemacs window is quite nice, especially with the combination of expanding a file to show functions and types.
+
+4. In order to preview color themes on the fly;
+   (SPC h t) to get into the interactive color theme selection interface.
+   (M C n) to move to the next selection and view it applied to your open windows.
+   (M C p) to move to the previous selection and view it applied to your open windows.
+   For normal scrolling (C n) or (C j) to move down and (C p) or (C k) to move up.

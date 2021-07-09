@@ -49,12 +49,17 @@
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;(unpin! t)
 
-(package! key-chord)
-
 ;; (package! aggressive-indent)
-
+(package! key-chord)
 (package! command-log-mode)
-(package! reason-mode)
 (package! csv-mode)
 (package! caps-lock)
 (package! sqlup-mode)
+(package! web-mode)
+(package! key-seq)
+(package! prettier-js)
+(package! tern)
+
+;; (package! lsp-rescript)
+;; (package! rescript-mode)
+;; (package! reason-mode)
