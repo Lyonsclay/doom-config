@@ -1,4 +1,4 @@
-;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
+;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-python-lsp-server
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
@@ -22,17 +22,19 @@
 ;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
 ;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
 
-;; (setq doom-font (font-spec :family "Source Code Pro" :size 14 :weight 'normal)
-;;       doom-variable-pitch-font (font-spec :family "sans" :size 14))
-(setq doom-font (font-spec :family "Fira Mono" :size 14 :weight 'normal)
-      doom-variable-pitch-font (font-spec :family "Fira Sans") ; inherits `doom-font''s :size
-      doom-unicode-font (font-spec :family "Input Mono Narrow" :size 12)
-      doom-big-font (font-spec :family "Fira Mono" :size 19))
+;; (setq
+;;  doom-font (font-spec :family "Fira Mono" :size 14)
+;;  doom-variable-pitch-font (font-spec :family "Fira Sans")
+;;  )
+
+(setq doom-font (font-spec :family "Fira Code" :style "Retina" :size 14 :height 1.0)
+      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13)
+      doom-big-font (font-spec :family "Fira Code" :style "Retina" :size 24))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-one)
+;; `load-theme' function. jThis is the default:
+(setq doom-theme 'doom-monokai-machine)
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
@@ -48,7 +50,7 @@
 ;; - `load!' for loading external *.el files relative to this one
 ;; - `use-package!' for configuring packages
 ;; - `after!' for running code after a package has loaded
-;; - `add-load-path!' for adding directories to the `loadEWath', relative to
+;; - `add-load-path!' for adding directories to the `load-path', relative to
 ;;   this file. Emacs searches the `load-path' when you load packages with
 ;;   `require' or `use-package'.
 ;; - `map!' for binding new keys
@@ -59,14 +61,12 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
-
-
+;
 ;; ----------------------------------------------------------------------------
 ;; CUSTOM CODE BELOW THIS POINT.
 ;; MIT @COPYRIGHT
 ;; USE AT YOUR LEISURE!
 ;; ----------------------------------------------------------------------------
-
 
 (map! :leader
       "0" #'treemacs-window
@@ -80,7 +80,10 @@
       "8" #'winum-select-window-8
       "9" #'winum-select-window-9
       "w a" #'ace-swap-window
-      "w w" #'ace-delete-window)
+      "w w" #'ace-delete-window
+      "t t" #'treemacs
+      "t s" #'toggle-center-scroll
+      "y" #'copy-path)
 
 
 ;; multiple cursor quick edit commands
@@ -92,27 +95,26 @@
 
 
 (map! :leader
-      "SPC" #'counsel-M-x
       "t t" #'treemacs
       "t s" #'toggle-center-scroll
       "y" #'copy-path)
 
-(key-seq-define-global "qd" 'dired)
+(map! :leader
+      "SPC" nil
+      "SPC" #'execute-extended-command)
+;; (key-seq-define-global "qd" 'dired)
 
-(key-seq-define text-mode-map "qf" 'flyspell-buffer)
+;; (key-seq-define text-mode-map "qf" 'flyspell-buffer)
 
-;; key-chord responsiveness can vary; this can make the upcase and downcase
-;; functionality particularly problematic. It might be worth investigating
-;; alternative key mappings as this functionality is used less than jkpop(it' hard to type that lol)
 (require 'key-chord)
 (key-chord-mode t)
 (key-seq-define-global "jk" 'jkpop)
 (key-seq-define-global "JK" 'jkpop)
 (key-seq-define-global "kj" 'jkpop)
 (key-seq-define-global "JK" 'jkpop)
-(key-chord-define-global "ii" 'caps-lock-mode)
-(key-seq-define-global "iu" 'upcase-word)
-(key-seq-define-global "oi" 'downcase-word)
+(key-seq-define-global "ii" 'caps-lock-mode)
+(key-seq-define-global "=-" 'upcase-word)
+(key-seq-define-global "-=" 'downcase-word)
 
 
 ;; RESTORE ctrl-D
@@ -126,7 +128,7 @@
   (sp-pair "`" "`" :wrap "M-`")
   (sp-pair "[" "]" :wrap "M-[")
   (sp-pair "{" "}" :wrap "M-{")
-  ;; (sp-pair "<" ">" :wrap "M-<")
+  (sp-pair "<" ">" :wrap "M-<")
   (sp-pair "'" "'" :wrap "M-'")
   (sp-pair "\"" "\"" :wrap "M-\""))
 
@@ -136,6 +138,8 @@
                           ;; The go playground will send your code to the web -- bad!
                           (map! :localleader :map go-mode-map :nv "e" nil)
                           (map! :localleader :map go-mode-map "e e" #'go-run)
+                          (map! :localleader :map go-mode-map "e p" #'go-prof-test)
+                          (map! :localleader :map go-mode-map "t v" #'go-test-verbose)
                           (map! :localleader :map go-mode-map "h d" #'go-guru-definition-other-window)
                           ))
 (map! :localleader
@@ -145,7 +149,6 @@
 
 (map! :localleader
       :map python-mode-map
-      "p" #'pipenv-env
       "r" #'ipython-startup-norm
       "f" #'pipenv-blackify)
 
@@ -161,32 +164,32 @@
       :map emacs-lisp-mode-map
       "f" #'indent-pp-sexp)
 
-;; --------------------------------------------------------------------------
-;; --- global state management -------
-;;
-;;
 
-;; **TODO we aren't using eglot currently but always worth checking out again.
-;;
-;; (after! eglot
-;;   (setq eglot-connect-timeout 30)
-;;   (setq jsonrpc-default-request-timeout 30))
+(setq ns-auto-hide-menu-bar t)
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(toggle-frame-fullscreen)
+(setq ns-use-native-fullscreen t)
 
-
-;; **TODO Verify this is still an issue with the current nix compiled build.
-;; flycheck is unusable otherwise -- process intensive -- slows typing
-;;
 (after! flycheck
-(setq flycheck-check-syntax-automatically '(save)))
+(setq flycheck-check-syntax-automatically '(save))
+(set-popup-rule! "^\\*Flycheck errors\\*$" :side 'bottom :size 0.1)
+)
+
+;; never lose your cursor again
+(beacon-mode 1)
+
+(setq treemacs-expand-after-init nil)
 
 ;; Emoji: 😄, 🤦, 🏴
 ;; How do we get kick ass emojis? It's an eternal quest.
 ;;
-(setq use-default-font-for-symbols nil)
-(set-fontset-font t 'symbol "Apple Color Emoji")
-(set-fontset-font t 'symbol "Noto Color Emoji" nil 'append)
-(set-fontset-font t 'symbol "Segoe UI Emoji" nil 'append)
-(set-fontset-font t 'symbol "Symbola" nil 'append)
+; (setq use-default-font-for-symbols nil)
+;; (set-fontset-font t 'symbol "Apple Color Emoji")
+;; (set-fontset-font t 'symbol "Noto Color Emoji" nil 'append)
+;; (set-fontset-font t 'symbol "Segoe UI Emoji" nil 'append)
+;; (set-fontset-font t 'symbol "Symbola" nil 'append)
+;; (setq doom-unicode-font (font-spec :family "Noto Color Emoji"))
+
 ;; sometimes any character change deletes the whole line
 ;; https://stackoverflow.com/a/3024055/2252501
 (defun stop-using-minibuffer ()
@@ -269,68 +272,40 @@
       scroll-margin 0)
   )
 
+(remove-hook! 'before-save-hook #'+format/buffer)
 ;; List of all key bindings for current buffer/mode.
 ;; (counsel--descbinds-cands)
 ;;
 
-(defun copy-path ()
-  "Copy current file path to kill ring and os/gui clipboard."
-  (interactive)
-  (kill-new buffer-file-name)
-  (insert buffer-file-name))
 
 ;; This is the best way to get full screen without menu bar and without osx transit animation.
-(setq ns-auto-hide-menu-bar t)
-(toggle-frame-maximized)
-(toggle-frame-fullscreen)
-(toggle-frame-fullscreen)
-
-;; ------------------------------------------------------------------------
-;; ---- mode specific functions ------------
-;; (require 'web-mode)
-
-;; https://www.reddit.com/r/emacs/comments/cztjdl/tsx_setup/ez8m3mc?utm_source=share&utm_medium=web2x&context=3
-;; (use-package web-mode
-;;   :ensure t
-;;   :mode
-;;   ;; ("\\.ejs\\'" "\\.hbs\\'" "\\.html\\'" "\\.php\\'" "\\.[jt]sx?\\'")
-;;   ("\\.tsx?\\'")
-;;   :config
-;;   (setq web-mode-content-types-alist '(("jsx" . "\\.[jt]sx?\\'")))
-;;   (setq web-mode-markup-indent-offset 2)
-;;   (setq web-mode-css-indent-offset 2)
-;;   (setq web-mode-code-indent-offset 2)
-;;   (setq web-mode-script-padding 2)
-;;   (setq web-mode-block-padding 2)
-;;   (setq web-mode-style-padding 2)
-;;   (setq web-mode-enable-auto-pairing t)
-;;   (setq web-mode-enable-auto-closing t)
-;;   (setq web-mode-enable-current-element-highlight t))
-
-;; **TODO Does this happen by default now?
+;; (setq ns-auto-hide-menu-bar t)
+;; (toggle-frame-maximized)
+;; (toggle-frame-fullscreen)
+;; (toggle-frame-fullscreen)
 ;;
-;; .venv directory contains all imported packages so it should not be watched by lsp.
-;; (add-hook 'lsp-mode-hook #'(lambda () (push "/\\.venv$" lsp-file-watch-ignored)))
-
-;; Leaving this here for reference to some potentially useful variables.
+;; ;; ** PYTHON CONFIG ** ----------->
 ;;
-;; '(python-check-command "./__pypackages__/*/bin/pyflake")
-;; '(python-pytest-executable "pipenv run pytest -vv")
-;; '(python-shell-extra-pythonpaths '("./__pypackages__/3.8/lib/"))
-;; '(python-shell-interpreter-args "-i")
-;; '(pyvenv-virtualenvwrapper-python "/Users/clay/.pyenv/shims/python")
-;; '(treemacs-python-executable "python")
+;;
 
 
-;; (setq python-shell-interpreter "~/.pyenv/shims/python" flycheck-python-pycompile-executable "~/.pyenv/shims/python")
-(setq python-pytest-executable "pytest -vv")
+(setq lsp-python-ms-auto-install-server t
+	      lsp-python-ms-parse-dot-env-enabled t)
+(python-mode-hook . (lambda ()
+                          (require 'lsp-python-ms)
+                          (lsp))))  ; or lsp-deferred
+
+
+;; ((python-mode
+;;   . ((eglot-workspace-configuration
+;;       . ((:pylsp . (:plugins (:jedi_completion (:include_params t)))))))))
 
 (defun pipenv-blackify ()
   "Format python code"
   (interactive)
   (save-buffer (current-buffer))
-  (message (concat "   🥁 pipenv run black 🥝    " (buffer-file-name)))
-  (shell-command (concat "PIPENV_VERBOSITY=-1 pipenv run black " (buffer-file-name)))
+  (message (concat "run black in " (buffer-file-name)))
+  (shell-command (concat "black --line-length 98 " (buffer-file-name)))
   ;; (save-buffer (current-buffer))
   (revert-buffer (current-buffer))
   )
@@ -346,10 +321,9 @@
 ;;   )
 
 
-;; **TODO review is this still necessary.
 (after! python
-  (setq python-ipython-command "$(which python) -m ipython -i --simple-prompt --no-color-info"
-        ))
+  (setq python-pytest-executable "pytest -vv")
+  )
 
 (defun ipython-startup-norm ()
   "Set up ipython with hot reloading of code."
@@ -367,6 +341,14 @@
   (process-send-string (get-buffer-process (current-buffer)) "pdm run ipython -i --simple-prompt \n")
   (process-send-string (get-buffer-process (current-buffer)) "%load_ext autoreload \n %autoreload 2 \n"))
 
+
+(defun conda-init ()
+  "Create a conda virtual environemnt."
+  (interactive)
+  (shell-command "conda init zsh")
+  (shell-command "conda activate")
+  )
+
 ;; The main reason to use this is to access numpy and pytorch.
 ;;
 (defun conda-repl ()
@@ -379,47 +361,31 @@
          (string-join (cdr +python-ipython-command) " ")))
     (+python/open-repl)))
 
-;; Use this if gofmt is screwing things up.
 ;;
-;; (after! go-mode
-;;               (remove-hook 'go-mode-hook 'gofmt))
-;; ﷽
-(defun go-run ()
-  "Compile and run buffer."
+;;
+;; ;; ** GOLANG CONFIG ** ----------->
+;;
+;;
+;;
+(defun go-prof-test ()
+  "output prof details to testing output buffer"
   (interactive)
-
-  (if (get-buffer "#go#run#session")(evil-delete-buffer "#go#run#session"))
-  (generate-new-buffer "#go#run#session")
-
-  (shell-command (format "go run %s 2> '#go#run#session' > '#go#run#session'" (buffer-file-name)))
-  (shell-command "go tool pprof --text cpu.pprof >> '#go#run#session'")
-
-  (defvar go-run-path (concat (file-name-directory buffer-file-name) "#go#run#session"))
-  (display-buffer
-   (find-file-noselect go-run-path)
-   '(
-     (display-buffer-reuse-window)
-     (display-buffer-in-direction "right")
-     ))
+  (defvar go-proof-path (concat (file-name-directory buffer-file-name) "*proof*"))
+  (shell-command (format "go tool pprof --text %scpu.pprof >> %s"
+                         (file-name-directory buffer-file-name) go-proof-path))
   )
 
-'(sql-connection-alist
-   '((districts
-      (sql-product 'postgres)
-      (sql-server "localhost")
-      (sql-user "clay")
-      (sql-database "districts"))
-     (yf-bi
-      (sql-product 'postgres)
-      (sql-server "10.0.1.102")
-      (sql-user "postgres")
-      (sql-database "yf-bi"))
-     ("gop_voters"
-      (sql-product 'postgres)
-      (sql-user "postgres")
-      (sql-database "query_gop_prod")
-      (sql-server "citus-v2.middleearth.eltoro.com"))) t)
+(defun go-test-verbose ()
+  "pass logs to stderr/stdout through test process"
+  (interactive)
+  (+go--run-tests (concat "-v -run" "='" (match-string-no-properties 2) "'")))
 
+;; ﷽
+;;
+;; ;; ** SQL CONFIG ** ----------->
+;;
+;;
+;;
 
 (defun choose-db ()
   "Prompt user to pick a database to connect to."
@@ -444,7 +410,7 @@
     )
     clay-db)
 
-(set-db "one" "districts")
+;; (set-db "one" "districts")
 ;; A startup function to pair with tws-region-to-process.
 ;; **TODO need to review startup functions.
 (defun vterm-sql-startup ()
@@ -494,9 +460,12 @@ active process."
   ;; This value may persist without being set here. We will see.
   (setq source-directory "/usr/local/Cellar/emacs-plus@28/28.0.50/share/emacs/28.0.50/lisp")
 
+  ;; (sql-set-product-feature 'postgres :prompt-regexp "^[-[:alnum:]_]*=[#>] ")
+  ;; (sql-set-product-feature 'postgres :prompt-cont-regexp
+                           ;; "^[-[:alnum:]_]*[-(][#>] ")
 ;; This is not firing when expected as in starting a new sql session.
 ;; **TODO need to review sql client methods.
- ;; (add-hook 'sql-login-hook 'clay-sql-login-hook)
+ (add-hook 'sql-login-hook 'clay-sql-login-hook)
  (defun clay-sql-login-hook ()
    "Custom SQL log-in behaviours. See `sql-login-hook'."
    ;; n.b. If you are looking for a response and need to parse the
@@ -511,7 +480,13 @@ active process."
    (comint-send-string sql-buffer "\\timing \n"))
 
 (add-hook 'sql-mode-hook #'sqlup-mode)
-;; (add-hook 'sql-mode-hook #'(lambda () (message "🖐🏽 configging sql for action 🐲")))
+(add-hook 'sql-mode-hook #'(lambda () (message "🖐🏽 configging sql for action 🐲")))
+
+
+
+;; javascript rjsx-mode
+;;
+(setq-hook! 'rjsx-mode-hook +format-with :none)
 
 ;; https://emacs.stackexchange.com/a/16692
 ;;
@@ -526,6 +501,71 @@ active process."
 
 ;; (add-hook 'sql-interactive-mode-hook 'sqli-add-hooks)
 
+
+;;
+;;
+;; ;; ** RESCRIPT CONFIG ** ----------->
+;;
+;;
+;;
+
+;; https://github.com/jjlee/rescript-mode#how-to-get-it-working
+;; Tell `rescript-mode` how to run your copy of `server.js` from rescript-vscode
+;; (you'll have to adjust the path here to match your local system):
+;; (customize-set-variable
+;;   'lsp-rescript-server-command
+;;     '("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio"))
+
+(after! resript-mode
+  (require 'lsp-rescript)
+  (add-to-list 'eglot-server-programs '(rescript-mode . ("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio")))
+  )
+
+(add-hook 'rescript-mode-hook 'eglot-ensure)
+
+;; (with-eval-after-load 'rescript-mode
+;;   ;; Tell `lsp-mode` about the `rescript-vscode` LSP server
+;;   (require 'lsp-rescript)
+;;   ;; Enable `lsp-mode` in rescript-mode buffers
+;; )
+
+(defun retest()
+  "Call retest on current buffer."
+  (interactive)
+
+  (shell-command (format "npm run retest %s" (current-buffer)))
+
+  )
+;;
+;; (after! rescript-mode
+;;  (after! lsp-rescript (add-hook 'rescript-mode-hook 'lsp-deferred))
+;;  (after! lsp-ui (add-hook 'rescript-mode-hook 'lsp-ui-doc-mode)))
+;;
+;;
+;; (map! :localleader
+;;       :map rescript-mode
+;;       "q" #'indent-pp-sexp)
+;; (add-to-list 'auto-mode-alist '("\\.resi*\\'" . rescript-mode))
+;;
+;; /Users/clay/developer/rescript/rescript-vscode/node_modules/.bin
+;;
+;; (after! eglot
+;;   (add-to-list 'eglot-server-programs
+;;                `(rescript-mode . ("tsc" "-b" "-w")))
+;;   )
+
+
+;;
+;;
+;; ;; ** JULIA CONFIG ** ----------->
+;;
+;;
+;; (after! eglot-jl
+;;   (setq eglot-jl-language-server-project eglot-jl-base))
+(setq eglot-jl-language-server-project "~/.julia/environments/v1.7")
+;;
+;; (add-hook 'julia-mode-hook 'julia-math-mode)
+;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
 
 ;; Got this from the internet -
 ;; - an issue in keycast repo -
@@ -550,47 +590,6 @@ active process."
 (after! command-log-mod
   (setq command-log-mode-window-size 50))
 
-;; (add-hook 'js2-mode-hook 'prettier-js-mode)
-;; (add-hook 'web-mode-hook 'prettier-js-mode)
-;;
-;;
-;; rescript-mode
-;; ;; Tell `rescript-mode` how to run your copy of `server.js` from rescript-vscode
-;; ;; (you'll have to adjust the path here to match your local system):
-;; (custom-set-variables
-;;  '(lsp-rescript-server-command
-;;    '("node" "/path/to/rescript-vscode/server/out/server.js" "--stdio")))
-;;
-;;
-;; (after! rescript-mode
-;;  (after! lsp-rescript (add-hook 'rescript-mode-hook 'lsp-deferred))
-;;  (after! lsp-ui (add-hook 'rescript-mode-hook 'lsp-ui-doc-mode)))
-;;
-;;
-;; (map! :localleader
-;;       :map rescript-mode
-;;       "q" #'indent-pp-sexp)
-;; (add-to-list 'auto-mode-alist '("\\.resi*\\'" . rescript-mode))
-;;
-;; /Users/clay/developer/rescript/rescript-vscode/node_modules/.bin
-;;
-;; (after! eglot
-;;   (add-to-list 'eglot-server-programs
-;;                `(rescript-mode . ("tsc" "-b" "-w")))
-;;   )
 
 
-;; I got this from som redit feed.
-;; (define-derived-mode rescript-mode prog-mode "Rescript"
-
-;;   (setq-local tab-width 2)
-;;   (setq-local indent-tabs-mode nil)
-
-;;   (setq-local comment-start "// ")
-;;   (setq-local comment-start-skip "//+\\s-*")
-
-;;   (setq-local parse-sexp-lookup-properties t)
-;;   (setq-local parse-sexp-ignore-comments t)
-
-;;   ;; (setq-local forward-sexp-function #'python-nav-forward-sexp)
-;;   (setq-local forward-sexp-function #'js2-mode-forward-sexp)
+(yas-global-mode 1)
