@@ -133,19 +133,30 @@
   (sp-pair "\"" "\"" :wrap "M-\""))
 
 ;; The unmapping of "spc m e" needs to happen after a go buffer is being visited, apparently.
-(add-hook 'go-mode-hook (lambda ()
-                          ;; I want to disable the go playground which is mapped to "spc m e".
-                          ;; The go playground will send your code to the web -- bad!
-                          (map! :localleader :map go-mode-map :nv "e" nil)
-                          (map! :localleader :map go-mode-map "e e" #'go-run)
-                          (map! :localleader :map go-mode-map "e p" #'go-prof-test)
-                          (map! :localleader :map go-mode-map "t v" #'go-test-verbose)
-                          (map! :localleader :map go-mode-map "h d" #'go-guru-definition-other-window)
-                          ))
-(map! :localleader
-      :map go-mode-map
-      "f" #'gofmt
-      "e e" #'go-run)
+;; (add-hook 'go-mode-hook (lambda ()
+;;                           ;; I want to disable the go playground which is mapped to "spc m e".
+;;                           ;; The go playground will send your code to the web -- bad!
+;;                           (map! :localleader :map go-mode-map :nv "e" nil)
+;;                           (map! :localleader :map go-mode-map "e e" #'go-run)
+;;                           (map! :localleader :map go-mode-map "e p" #'go-prof-test)
+;;                           (map! :localleader :map go-mode-map "t v" #'go-test-verbose)
+;;                           (map! :localleader :map go-mode-map "h d" #'go-guru-definition-other-window)
+;;                           ))
+;; (require 'project)
+
+;; (defun project-find-go-module (dir)
+;;   (when-let ((root (locate-dominating-file dir "go.mod")))
+;;     (cons 'go-module root)))
+
+;; (cl-defmethod project-root ((project (head go-module)))
+;;   (cdr project))
+
+;; (add-hook 'project-find-functions #'project-find-go-module)
+
+;; (map! :localleader
+;;       :map go-mode-map
+;;       "f" #'gofmt
+;;       "e e" #'go-run)
 
 (map! :localleader
       :map python-mode-map
@@ -174,11 +185,11 @@
 (setq flycheck-check-syntax-automatically '(save))
 (set-popup-rule! "^\\*Flycheck errors\\*$" :side 'bottom :size 0.1)
 )
+;; (setq company-idle-delay 3)
+(setq eglot-events-buffer-size 0)
 
 ;; never lose your cursor again
 (beacon-mode 1)
-
-(setq treemacs-expand-after-init nil)
 
 ;; Emoji: 😄, 🤦, 🏴
 ;; How do we get kick ass emojis? It's an eternal quest.
@@ -199,9 +210,6 @@
 
 (add-hook 'mouse-leave-buffer-hook 'stop-using-minibuffer)
 
-;; ace-window is required by treemacs and certain variables are not defined if not loaded here(this is probably a temp work around)
-(require 'ace-window)
-
 ;; startup is much quicker without loading saved history
 (savehist-mode -1)
 
@@ -209,6 +217,15 @@
 ;; or any unsaved buffer for that matter.
 (add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
 (add-hook 'doom-switch-window-hook (lambda () (save-some-buffers t)))
+
+;; Treemacs --
+;;
+
+(setq treemacs-expand-after-init nil)
+
+;; ace-window is required by treemacs and certain variables are not defined if not loaded here(this is probably a temp work around)
+;; (require 'ace-window)
+
 
 ;; Is this the best place for this declaration? 🌛
 ;; It would be better if this was dynamic based on longest project name.
@@ -288,18 +305,6 @@
 ;;
 ;;
 
-
-(setq lsp-python-ms-auto-install-server t
-	      lsp-python-ms-parse-dot-env-enabled t)
-(python-mode-hook . (lambda ()
-                          (require 'lsp-python-ms)
-                          (lsp))))  ; or lsp-deferred
-
-
-;; ((python-mode
-;;   . ((eglot-workspace-configuration
-;;       . ((:pylsp . (:plugins (:jedi_completion (:include_params t)))))))))
-
 (defun pipenv-blackify ()
   "Format python code"
   (interactive)
@@ -322,6 +327,7 @@
 
 
 (after! python
+  (require 'lsp-pyright)
   (setq python-pytest-executable "pytest -vv")
   )
 
@@ -482,12 +488,6 @@ active process."
 (add-hook 'sql-mode-hook #'sqlup-mode)
 (add-hook 'sql-mode-hook #'(lambda () (message "🖐🏽 configging sql for action 🐲")))
 
-
-
-;; javascript rjsx-mode
-;;
-(setq-hook! 'rjsx-mode-hook +format-with :none)
-
 ;; https://emacs.stackexchange.com/a/16692
 ;;
 ;; (defun sql-add-newline-first (output)
@@ -502,7 +502,44 @@ active process."
 ;; (add-hook 'sql-interactive-mode-hook 'sqli-add-hooks)
 
 
+
+;; javascript rjsx-mode
 ;;
+;; (setq-hook! 'rjsx-mode-hook +format-with :none)
+
+(use-package web-mode
+  :hook ((web-mode . lsp)
+         (typescript-tsx-mode . lsp))
+  :mode (("\\.html\\'" . web-mode)
+         ("\\.html\\.eex\\'" . web-mode)
+         ("\\.html\\.tera\\'" . web-mode)
+         ("\\.tsx\\'" . typescript-tsx-mode))
+  :init
+  (define-derived-mode typescript-tsx-mode typescript-mode "TypeScript-tsx")
+  :config
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset 2
+        web-mode-code-indent-offset 2))
+
+(use-package prettier
+  :hook ((typescript-tsx-mode . prettier-mode)
+         (typescript-mode . prettier-mode)
+         (js-mode . prettier-mode)
+         (json-mode . prettier-mode)
+         (css-mode . prettier-mode)
+         (scss-mode . prettier-mode)))
+
+(require 'prettier-js)
+
+
+
+(define-derived-mode tsx-mode typescript-mode
+  "typescript but better because such X")
+
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+(require 'eglot)
+(add-to-list 'eglot-server-programs '(web-mode . ("typescript-language-server" "--stdio")))
+
 ;;
 ;; ;; ** RESCRIPT CONFIG ** ----------->
 ;;
@@ -566,6 +603,12 @@ active process."
 ;;
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
+
+;; ein mode <Juptyer Notebooks>
+(setq ein:output-area-inlined-images t)
+;; enable undo in ein buffer
+(add-hook 'fundamental-mode 'turn-on-undo-tree-mode)
+
 
 ;; Got this from the internet -
 ;; - an issue in keycast repo -
