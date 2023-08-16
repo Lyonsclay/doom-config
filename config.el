@@ -27,14 +27,14 @@
 ;;  doom-variable-pitch-font (font-spec :family "Fira Sans")
 ;;  )
 
-(setq doom-font (font-spec :family "Fira Code" :style "Retina" :size 14 :height 1.0)
-      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13)
-      doom-big-font (font-spec :family "Fira Code" :style "Retina" :size 24))
+(setq doom-font (font-spec :family "Input Mono" :style "Regular" :size 14 :height 1.0)
+      doom-variable-pitch-font (font-spec :family "Input Mono" :style "Regular" :size 13)
+      doom-big-font (font-spec :family "Input Mono" :style "Regular" :size 24))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. jThis is the default:
-(setq doom-theme 'doom-monokai-machine)
+;; `load-theme' function. This is the default:
+(setq doom-theme 'doom-oceanic-next)
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
@@ -83,7 +83,8 @@
       "w w" #'ace-delete-window
       "t t" #'treemacs
       "t s" #'toggle-center-scroll
-      "y" #'copy-path)
+      "y" #'copy-path
+      "k" #'comint-kill-region)
 
 
 ;; multiple cursor quick edit commands
@@ -93,11 +94,6 @@
  "C-<" #'mc/mark-previous-like-this
  "M-)" #'sp-unwrap-sexp)
 
-
-(map! :leader
-      "t t" #'treemacs
-      "t s" #'toggle-center-scroll
-      "y" #'copy-path)
 
 (map! :leader
       "SPC" nil
@@ -186,7 +182,7 @@
 (set-popup-rule! "^\\*Flycheck errors\\*$" :side 'bottom :size 0.1)
 )
 ;; (setq company-idle-delay 3)
-(setq eglot-events-buffer-size 0)
+;; (setq eglot-events-buffer-size 0)
 
 ;; never lose your cursor again
 (beacon-mode 1)
@@ -220,16 +216,14 @@
 
 ;; Treemacs --
 ;;
+(require 'treemacs)
 
 (setq treemacs-expand-after-init nil)
-
+;; (setq doom-themes-treemacs-enable-variable-pitch nil)
 ;; ace-window is required by treemacs and certain variables are not defined if not loaded here(this is probably a temp work around)
-;; (require 'ace-window)
+(require 'ace-window)
 
 
-;; Is this the best place for this declaration? 🌛
-;; It would be better if this was dynamic based on longest project name.
-;; (setq treemacs-width 35)
 ;; 🌶🌶🌶
 (defun treemacs-window ()
   "Switch to treemacs; start if not already running."
@@ -249,6 +243,16 @@
         (evil-window-top-left)
         (treemacs))
     (error nil)))
+
+(after! treemacs
+  ;; (irrelevant preferences elided)
+  (setq treemacs-position 'left)
+  (setq treemacs-width 35)
+  ;; workaround here:
+  (set-popup-rule! "^ \\*Treemacs"
+    :side treemacs-position
+    :window-width treemacs-width)
+  )
 
 (defun jkpop ()
   "Prevent caps-lock-mode from being selected."
@@ -310,7 +314,7 @@
   (interactive)
   (save-buffer (current-buffer))
   (message (concat "run black in " (buffer-file-name)))
-  (shell-command (concat "black --line-length 98 " (buffer-file-name)))
+  (shell-command (concat "black --line-length 80 " (buffer-file-name)))
   ;; (save-buffer (current-buffer))
   (revert-buffer (current-buffer))
   )
@@ -328,7 +332,7 @@
 
 (after! python
   (require 'lsp-pyright)
-  (setq python-pytest-executable "pytest -vv")
+  (setq python-pytest-executable "pytest -vv --disable-warnings")
   )
 
 (defun ipython-startup-norm ()
@@ -336,7 +340,8 @@
   (interactive)
 
   (+python/open-ipython-repl)
-  (process-send-string (get-buffer-process (current-buffer)) "%load_ext autoreload \n %autoreload 2 \n"))
+  (process-send-string (get-buffer-process (current-buffer)) "%load_ext autoreload\n %autoreload 2\n")
+  (process-send-string (get-buffer-process (current-buffer)) "from IPython.core import ultratb;ultratb.VerboseTB._tb_highlight = 'bg:ansired';"))
 
 (defun ipython-startup ()
   "Initiate ipython from current buffer with shell command."
@@ -344,7 +349,7 @@
   (evil-window-vsplit)
   (evil-window-right 1)
   (+vterm/here default-directory)
-  (process-send-string (get-buffer-process (current-buffer)) "pdm run ipython -i --simple-prompt \n")
+  (process-send-string (get-buffer-process (current-buffer)) "ipython -i --simple-prompt -c \"from IPython.core import ultratb;ultratb.VerboseTB._tb_highlight = 'bg:ansired'\n\" \n")
   (process-send-string (get-buffer-process (current-buffer)) "%load_ext autoreload \n %autoreload 2 \n"))
 
 
@@ -392,11 +397,29 @@
 ;;
 ;;
 ;;
+;; (add-hook 'sql-mode-hook
+;;           (lambda ()
+;;             (progn
+;;               (setq-default tab-width 4)
+;;               (setq-default sqlup-mode nil)
+;;               )))
 
+;; (add-hook 'sql-mode-hook #'sqlup-mode)
+;; (add-hook 'sql-mode-hook #'(lambda () (message "🖐🏽 configging sql for action 🐲")))
+
+
+(defun sql-mode-hook-function ()
+  "All your add-ons to `sql-mode'."
+  (setq indent-tabs-mode nil)
+  ;; (setq align-mode-rules-list align-sql-indent-rules-list)
+  (message "SQL - moduls  🦉 ")
+  (setq tab-width 4))
+
+(add-hook 'sql-mode-hook 'sql-mode-hook-function)
 (defun choose-db ()
   "Prompt user to pick a database to connect to."
   (interactive)
-  (let ((choices '("districts" "yf-bi")))
+  (let ((choices '("districts" "animal")))
     (set-db "%s" (ido-completing-read "Choose database: " choices ))))
 
 ;; clay add on to sql mode -- postgres specific
@@ -406,13 +429,15 @@
   (interactive)
 
   (defvar clay-db)
-  ;; (defvar clay-districts)
-  (defvar  yf-bi)
-  (let ((clay-districts "psql -d districts --echo-queries --echo-hidden -P pager=off \n")
-        (yf-bi "psql -U postgres -h 10.0.1.102 -d yf-bi --echo-queries --echo-hidden -P pager=off \n"))
+  (defvar gorge)
+  (defvar  animal)
+  (let ((districts "psql -d districts --echo-queries --echo-hidden -P pager=off \n")
+        (gorge "psql -U postgres -h 127.0.0.1 -d gorge --echo-queries --echo-hidden -P pager=off \n")
+        (animal "psql -U postgres -h 127.0.0.1 -d animal --echo-queries --echo-hidden -P pager=off \n"))
 
-    (if (string-equal ans "districts")(setq clay-db clay-districts ))
-    (if (string-equal ans "yf-bi")(setq clay-db yf-bi))
+    (if (string-equal ans "districts")(setq clay-db districts))
+    (if (string-equal ans "gorge")(setq clay-db gorge))
+    (if (string-equal ans "animal")(setq clay-db animal))
     )
     clay-db)
 
@@ -485,9 +510,6 @@ active process."
    (comint-send-string sql-buffer "\\set VERBOSITY verbose \n")
    (comint-send-string sql-buffer "\\timing \n"))
 
-(add-hook 'sql-mode-hook #'sqlup-mode)
-(add-hook 'sql-mode-hook #'(lambda () (message "🖐🏽 configging sql for action 🐲")))
-
 ;; https://emacs.stackexchange.com/a/16692
 ;;
 ;; (defun sql-add-newline-first (output)
@@ -531,14 +553,12 @@ active process."
 
 (require 'prettier-js)
 
-
-
 (define-derived-mode tsx-mode typescript-mode
   "typescript but better because such X")
 
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-(require 'eglot)
-(add-to-list 'eglot-server-programs '(web-mode . ("typescript-language-server" "--stdio")))
+;; (require 'eglot)
+;; (add-to-list 'eglot-server-programs '(web-mode . ("typescript-language-server" "--stdio")))
 
 ;;
 ;; ;; ** RESCRIPT CONFIG ** ----------->
@@ -553,12 +573,12 @@ active process."
 ;;   'lsp-rescript-server-command
 ;;     '("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio"))
 
-(after! resript-mode
-  (require 'lsp-rescript)
-  (add-to-list 'eglot-server-programs '(rescript-mode . ("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio")))
-  )
+;; (after! resript-mode
+;;   (require 'lsp-rescript)
+;;   (add-to-list 'eglot-server-programs '(rescript-mode . ("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio")))
+;;   )
 
-(add-hook 'rescript-mode-hook 'eglot-ensure)
+;; (add-hook 'rescript-mode-hook 'eglot-ensure)
 
 ;; (with-eval-after-load 'rescript-mode
 ;;   ;; Tell `lsp-mode` about the `rescript-vscode` LSP server
@@ -599,7 +619,7 @@ active process."
 ;;
 ;; (after! eglot-jl
 ;;   (setq eglot-jl-language-server-project eglot-jl-base))
-(setq eglot-jl-language-server-project "~/.julia/environments/v1.7")
+;; (setq eglot-jl-language-server-project "~/.julia/environments/v1.7")
 ;;
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
@@ -632,7 +652,6 @@ active process."
 ;; Using after! instead of mode-hook avoids calling the window size function more than once 🚅
 (after! command-log-mod
   (setq command-log-mode-window-size 50))
-
 
 
 (yas-global-mode 1)

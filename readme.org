@@ -138,18 +138,24 @@ Doom promotes higher level configuration macros ->
 
 5. M-x getenv pulls up drop down of all environment variables. Once you select one it will show you the value.
 
+6. IPython or other shell user `(setq inhibit-read-only t)` in order to edit buffer.
+
+7. use \(\s-*\)\s- with the align-regexp command 🐈
+
+8. In a terminal shell use (SPC k) to delete highlighted output lines.
+
 ------------------------------
 -- normal workflows
 
 1. Copy current file path
    a. relative - (SPC f Y)
-   b. absolute - (SPC f y)
+   b. absolute - (SPC f a)
 2. Show current file in treemacs - (SPC o P)
 
 -- debugging and fixing
 1. Recently had an issue with a dep that introduced a bug or breaking change. As it turns out I was able to update
    emacs-plus@28 because a change was pushed that accomodates the new xref pattern. But hlissner offered this suggestion on
-   dicord which is a good tip in general.
+   discord which is a good tip in general.
 The workaround: pin xref to the last known working ref: a82f459b37b31546bf274388baf8aca79e9c30d9
 
 ;; in $DOOMDIR/packages.el
