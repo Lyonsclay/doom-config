@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: loud-print
+# key: /pow
+# --
+
+print("`(dotimes (_ 5) (insert "$1"))` ${2:ALERT} `(dotimes (_ 5) (insert "$1"))`")
+print(${3:enter-message-here})
+print("`(dotimes (_ 5) (insert "$1"))` $2 `(dotimes (_ 5) (insert "$1"))`")
+$0

@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: err
+# uuid: err-1
+# key: /err
+# condition: t
+# --
+
+if err != nil {
+   log.Fatalf("${1:System} failed - %v \n", err)
+}

@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: test
+# uuid: test-1
+# key: /test
+# condition: t
+# --
+
+func Test${1:Iface}(t *testing.T) {
+	${2:data} := ${3:[]interface\{\}\{8, "8"\}}
+	output := ${4:data[0]}
+	expected := 8
+	if fmt.Sprintf("%v", output) != fmt.Sprintf("%v", expected) {
+		t.Errorf("Expected: %v \n Received: %v \n", expected, output)
+	}
+}
