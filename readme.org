@@ -1,7 +1,5 @@
-#+TITLE: Getting Setup -- giving doom emacs a spin 🚆
-#+DATE:    December 3, 2020
-#+SINCE:   <replace with next tagged release version>
-#+STARTUP: inlineimages nofold
+#+title: Getting Setup -- giving doom emacs a spin 🚆
+#+date:    December 3, 2020
 
 * Table of Contents :TOC_3:noexport:
 - [[#description][Description]]
@@ -12,23 +10,17 @@
   - [[#goto-commands][Goto Commands]]
     - [[#spc-i-e-emojify-insert-emoji-][(SPC i e) emojify-insert-emoji 🐳]]
     - [[#spc-m-e-e-eval-last-sexp-----][(SPC m e e) eval-last-sexp     🥑]]
-    - [[#spc-t-t-treemacs-------------][(SPC t t) treemacs             ⛑]]
-    - [[#spc-t-m-minimap-mode---------][(SPC t m) minimap-mode         🐘]]
-    - [[#spc-h-t-load-theme-----------][(SPC h t) load-theme           🍆]]
+    - [[#spc-t-t-treemacs-----------------][(SPC t t) treemacs                 ⛑]]
+    - [[#spc-t-m-minimap-mode------][(SPC t m) minimap-mode      🐘]]
+    - [[#spc-h-t-load-theme-----------][(SPC h t) load-theme           👗]]
     - [[#spc-o-t-vterm-here-----------][(SPC o t) vterm-here           🌈]]
 - [[#prerequisites][Prerequisites]]
 - [[#features][Features]]
 - [[#configuration][Configuration]]
 - [[#troubleshooting][Troubleshooting]]
 - [[#tips][Tips]]
-- [[#episode-1][Episode 1]]
-  - [[#doom-doctor--][`doom doctor`  👜]]
-  - [[#doom-sync-][`doom sync` 🙋🏾]]
-  - [[#migrating-from-spacemacs-][Migrating from spacemacs. ❇]]
-  - [[#live-coding-todos-][Live coding TODOS. 🗒]]
-  - [[#general-assesment][General Assesment]]
-- [[#future-episode-topics][Future Episode Topics]]
-  - [[#setup-sql-driver][Setup sql driver]]
+  - [[#configuring-dired][configuring dired]]
+- [[#tips-and-trics][Tips and Trics]]
 
 * Description
 # A plan for making this perfect!
@@ -40,7 +32,7 @@
 # A list of packages
 *** doom
 + treemacs 😺
-+ lsp 🐲
++ eglot 🐲
 *** private
 + keychord 🏀
 
@@ -48,9 +40,9 @@
 # A list of the best of the best
 *** (SPC i e) emojify-insert-emoji 🐳
 *** (SPC m e e) eval-last-sexp     🥑
-*** (SPC t t) treemacs             ⛑
-*** (SPC t m) minimap-mode         🐘
-*** (SPC h t) load-theme           🍆
+*** (SPC t t) treemacs                 ⛑
+*** (SPC t m) minimap-mode      🐘
+*** (SPC h t) load-theme           👗
 *** (SPC o t) vterm-here           🌈
 
 * Prerequisites
@@ -69,56 +61,17 @@
 # Common issues and their solution, or places to look for help.
 
 * Tips
-1. If you use ivy(as I do) then you have to scroll by pressing C-M n or C-M p to see previous or next.
-
-* Episode 1
-Test driving Doom emacs 🎏
-** `doom doctor`  👜
-Doom comes with a command line interface that is quite nice and enables an easy upgrade experience.
-** `doom sync` 🙋🏾 
-This command will add/remove packages and update all conigs.
-** `doom install`
-When you need a clean config. Rename your existing '.doom.d' directory before running this.
-** Migrating from spacemacs. ❇ 
-I did not expect to move completely as quick as I did after first looking at doom. The UX is phenomenal and makes me an immediate fan. I see three important aspects that make this product great!
-a. It looks great.
-   ** so many subtle refinements
-b. The configuration is well organized and facilitates uprade and down grade scenarios. I need to experience the ecosystem through some upgrades before I can't really comment on that aspect of doom. But I can say that having designated files and code patterns which separate private config and user installed packaeges from framework packages and their configs.
-c. Adding go-run function.
-** Live coding TODOS. 🇬🇳
-a. Add a keymap for common activity. (make vterm far right or make magit window far right)
-b. Decide keys for multiple-cursors.
-b. Record setup for project.
-c. Test drive typescript with new pbiviz project.
-d. Add :localleader mapped commands to gorepl.
-   Restart go-repl.
-e. PR for window-move-very-far-right
-
-** General Assesment 🇬🇼
-Migrating to Doom has caused me to take my emacs-elisp to the next level. This is most likely a result of feature loss.
-
-Doom promotes higher level configuration macros ->  
-
-
-* Future Episode Topics
-** Setup sql driver
-0:01:44 
-0:01:33
 
 ** configuring dired
    Dired Omit Extensions
    Easy Customization interface.
-# This popped up when visting a python file.
-  
 
-# when installing the latest ipython the package jedi needs to be deprecated to <0.18
-# in order to enable tab completion in the terminal.
-
-
--- tips and trics
+* Tips and Trics
 -- --
 -- --
 -- --
+
+0. If you use ivy(as I do) then you have to scroll by pressing C-M n or C-M p to see previous or next.
 
 1. ibuffer - is an easy way to delete any buffer from current window.
    To delete a buffer navigate to it in the list(popup window) user j/k,
@@ -143,6 +96,8 @@ Doom promotes higher level configuration macros ->
 7. use \(\s-*\)\s- with the align-regexp command 🐈
 
 8. In a terminal shell use (SPC k) to delete highlighted output lines.
+
+9. In a gptel-menu use =c-m= instead of =return= to send prompt.
 
 ------------------------------
 -- normal workflows

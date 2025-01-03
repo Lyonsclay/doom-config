@@ -59,11 +59,23 @@
 (package! key-seq)
 (package! prettier-js)
 (package! tern)
-;; (package! lsp-rescript)
-;; (package! rescript-mode)
-;; (package! gotest)
 ;; cursor highlighting
 (package! beacon)
+(package! justl)
 (package! just-mode)
 (package! lsp-pyright)
 (package! py-yapf)
+
+;; (package! flycheck-rust)
+(package! toml)
+;; (package! earthfile-mode)
+(package! mermaid-ts-mode)
+(package! gptel)
+(package! prettier)
+(package! org-bullets)
+(package! visual-fill-column)
+(package! copilot
+  :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
+
+(package! copilot-chat)
+(package! chatgpt-shell)

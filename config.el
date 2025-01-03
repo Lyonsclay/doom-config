@@ -27,9 +27,9 @@
 ;;  doom-variable-pitch-font (font-spec :family "Fira Sans")
 ;;  )
 
-(setq doom-font (font-spec :family "Input Mono" :style "Regular" :size 14 :height 1.0)
-      doom-variable-pitch-font (font-spec :family "Input Mono" :style "Regular" :size 13)
-      doom-big-font (font-spec :family "Input Mono" :style "Regular" :size 24))
+ (setq doom-font (font-spec :family "Source Code Pro" :style "Regular" :size 14 :height 1.0)
+      doom-variable-pitch-font (font-spec :family "Source Code Pro" :style "Regular" :size 13)
+      doom-big-font (font-spec :family "Source Code Pro" :style "Regular" :size 24))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
@@ -149,10 +149,9 @@
 
 ;; (add-hook 'project-find-functions #'project-find-go-module)
 
-;; (map! :localleader
-;;       :map go-mode-map
-;;       "f" #'gofmt
-;;       "e e" #'go-run)
+(map! :localleader
+      :map rustic-mode-map
+      "t r" #'rustic-cargo-test-rerun)
 
 (map! :localleader
       :map python-mode-map
@@ -174,15 +173,14 @@
 
 (setq ns-auto-hide-menu-bar t)
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
-(toggle-frame-fullscreen)
+;; (toggle-frame-fullscreen)
 (setq ns-use-native-fullscreen t)
 
-(after! flycheck
-(setq flycheck-check-syntax-automatically '(save))
-(set-popup-rule! "^\\*Flycheck errors\\*$" :side 'bottom :size 0.1)
-)
+;; (after! flycheck
+;; (setq flycheck-check-syntax-automatically '(save))
+;; (set-popup-rule! "^\\*Flycheck errors\\*$" :side 'bottom :size 0.1)
+;; )
 ;; (setq company-idle-delay 3)
-;; (setq eglot-events-buffer-size 0)
 
 ;; never lose your cursor again
 (beacon-mode 1)
@@ -216,13 +214,13 @@
 
 ;; Treemacs --
 ;;
-(require 'treemacs)
+;; (require 'treemacs)
 
-(setq treemacs-expand-after-init nil)
+;; (setq treemacs-expand-after-init nil)
 ;; (setq doom-themes-treemacs-enable-variable-pitch nil)
 ;; ace-window is required by treemacs and certain variables are not defined if not loaded here(this is probably a temp work around)
 (require 'ace-window)
-
+(add-hook 'treemacs-mode-hook (lambda() (display-line-numbers-mode -1)))
 
 ;; 🌶🌶🌶
 (defun treemacs-window ()
@@ -248,6 +246,8 @@
   ;; (irrelevant preferences elided)
   (setq treemacs-position 'left)
   (setq treemacs-width 35)
+  (setq treemacs-show-cursor t)
+  (setq treemacs-expand-after-init nil)
   ;; workaround here:
   (set-popup-rule! "^ \\*Treemacs"
     :side treemacs-position
@@ -330,10 +330,10 @@
 ;;   )
 
 
-(after! python
-  (require 'lsp-pyright)
-  (setq python-pytest-executable "pytest -vv --disable-warnings")
-  )
+;; (after! python
+;;   (require 'lsp-pyright)
+;;   (setq python-pytest-executable "pytest -vv --disable-warnings")
+;;   )
 
 (defun ipython-startup-norm ()
   "Set up ipython with hot reloading of code."
@@ -348,48 +348,109 @@
   (interactive)
   (evil-window-vsplit)
   (evil-window-right 1)
-  (+vterm/here default-directory)
+  ;; (+vterm/here default-directory)
   (process-send-string (get-buffer-process (current-buffer)) "ipython -i --simple-prompt -c \"from IPython.core import ultratb;ultratb.VerboseTB._tb_highlight = 'bg:ansired'\n\" \n")
   (process-send-string (get-buffer-process (current-buffer)) "%load_ext autoreload \n %autoreload 2 \n"))
 
+;; (defun conda-init ()
+;;   "Create a conda virtual environemnt."
+;;   (interactive)
+;;   (shell-command "conda init zsh")
+;;   (shell-command "conda activate")
+;;   )
 
-(defun conda-init ()
-  "Create a conda virtual environemnt."
-  (interactive)
-  (shell-command "conda init zsh")
-  (shell-command "conda activate")
+;; ;; The main reason to use this is to access numpy and pytorch.
+;; ;;
+;; (defun conda-repl ()
+;;   "Open an IPython REPL."
+;;   (interactive)
+;;   (require 'python)
+;;   (shell-command "conda init zsh && conda activate")
+;;   (let ((python-shell-interpreter "/Users/clay/miniconda3/bin/ipython")
+;;         (python-shell-interpreter-args
+;;          (string-join (cdr +python-ipython-command) " ")))
+;;     (+python/open-repl)))
+
+;;
+;;
+
+;; ;; ** RUST CONFIG ** ----------->
+;; https://github.com/emacs-lsp/lsp-mode/issues/3490
+;; (require 'tramp)
+
+
+(after! tramp
+  (setq tramp-inline-compress-start-size 1000)
+  (setq tramp-copy-size-limit 10000)
+  (setq vc-handled-backends '(Git))
+  (setq tramp-verbose 1)
+  (setq tramp-default-method "scp")
+  (setq tramp-use-ssh-controlmaster-options nil)
+  (setq projectile--mode-line "Projectile")
+  (setq tramp-verbose 1)
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   )
 
-;; The main reason to use this is to access numpy and pytorch.
-;;
-(defun conda-repl ()
-  "Open an IPython REPL."
-  (interactive)
-  (require 'python)
-  (shell-command "conda init zsh && conda activate")
-  (let ((python-shell-interpreter "/Users/clay/miniconda3/bin/ipython")
-        (python-shell-interpreter-args
-         (string-join (cdr +python-ipython-command) " ")))
-    (+python/open-repl)))
 
-;;
-;;
-;; ;; ** GOLANG CONFIG ** ----------->
-;;
-;;
-;;
-(defun go-prof-test ()
-  "output prof details to testing output buffer"
-  (interactive)
-  (defvar go-proof-path (concat (file-name-directory buffer-file-name) "*proof*"))
-  (shell-command (format "go tool pprof --text %scpu.pprof >> %s"
-                         (file-name-directory buffer-file-name) go-proof-path))
-  )
+;; (require 'eglot)
+;; (add-hook 'rust-mode-hook (setq eglot-events-buffer-config 0
+;;                                 ;; eglot-ignored-server-capabilities '(:inlayHintProvider)
+;;                                 eglot-confirm-server-edits 'diff))
 
-(defun go-test-verbose ()
-  "pass logs to stderr/stdout through test process"
-  (interactive)
-  (+go--run-tests (concat "-v -run" "='" (match-string-no-properties 2) "'")))
+;; (require 'rustic)
+;; ;;   ; Tell rustic where to find the cargo binary
+;; ;;   ;; (setq rustic-cargo-bin-remote "~/.cargo/bin/cargo")
+(setq rustic-cargo-bin-remote "/usr/local/cargo/bin/cargo")
+;;   (setq rustic-lsp-client 'eglot)
+
+;; (add-hook 'rust-mode-hook 'eglot-ensure)
+;; (add-to-list 'eglot-server-programs
+;;              '((rust-ts-mode rust-mode) .
+;;                ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
+
+;; (require 'evil-surround)
+;; (add-hook 'rustic-mode-local-vars-hook #'lsp!)
+;; (add-hook 'rust-mode-hook (lambda ()
+;;                            (push '(< . ("< " . " >")) evil-surround-pairs-alist)))
+
+
+;; (setq lsp-rust-analyzer-server '(:cmd "~/.cargo/bin/rust-analyzer" :initOptions (:linkedProjects ["~/developer/eltoro/spark-livy-starter/Cargo.toml"])))
+;; ;; (require 'toml-mode)
+;; ;;(require 'flycheck-inline)
+
+;; (use-package! rustic
+;;               :defer t
+;;               :config
+;;               (my-message "rustic configuration")
+;;               (setq! rustic-format-trigger 'on-save
+;;                      rustic-format-on-save t
+;;                      rustic-format-on-save-method 'rustic-format-buffer
+;;                      rustic-compile-backtrace "1"
+;;                      rustic-compile-directory-method 'rustic-buffer-crate ;;'rustic-project-root
+;;                      ;;rustic-format-display-method #'switch-to-buffer
+;;                      ;;rustic-kill-buffer-and-window nil
+;;                      ;;rustic-compile-display-method #'ace-display-buffer
+;;                      rustic-lsp-server 'rust-analyzer)
+;;               (custom-set-faces!
+;;                '(rustic-message :inherit default)
+;;                '(rustic-compilation-error :inherit compilation-error )
+;;                '(rustic-compilation-warning :inherit compilation-warning)
+;;                '(rustic-compilation-info :inherit compilation-info)
+;;                '(rustic-compilation-line :inherit compilation-line-number)
+;;                '(rustic-compilation-column :inherit compilation-column-number))
+;;               (setq! rustic-ansi-faces ansi-color-names-vector))
+
+;; (use-package! flycheck
+;;               :defer t
+;;               :config
+;;               (require 'flycheck-rust)
+;;               (push 'rustic-clippy flycheck-checkers))
+
+;; (add-hook 'rust-mode-hook 'flycheck-mode)
+
+;; ;; https://github.com/flycheck/flycheck-rust
+;; (with-eval-after-load 'rust-mode
+;;   (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
 
 ;; ﷽
 ;;
@@ -547,82 +608,21 @@ active process."
   :hook ((typescript-tsx-mode . prettier-mode)
          (typescript-mode . prettier-mode)
          (js-mode . prettier-mode)
-         (json-mode . prettier-mode)
+         ;; (json-mode . prettier-mode)
          (css-mode . prettier-mode)
          (scss-mode . prettier-mode)))
 
-(require 'prettier-js)
+;; (require 'prettier-js)
+
+;; (add-hook 'json-mode-hook
+;;   (lambda ()
+;;     (setq prettier-js-args '("--trailing-comma" "all" "--bracket-spacing" "false"))
+;;     (setq prettier-js-executable-path "~/.yarn/bin/prettier")))
 
 (define-derived-mode tsx-mode typescript-mode
   "typescript but better because such X")
 
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-;; (require 'eglot)
-;; (add-to-list 'eglot-server-programs '(web-mode . ("typescript-language-server" "--stdio")))
-
-;;
-;; ;; ** RESCRIPT CONFIG ** ----------->
-;;
-;;
-;;
-
-;; https://github.com/jjlee/rescript-mode#how-to-get-it-working
-;; Tell `rescript-mode` how to run your copy of `server.js` from rescript-vscode
-;; (you'll have to adjust the path here to match your local system):
-;; (customize-set-variable
-;;   'lsp-rescript-server-command
-;;     '("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio"))
-
-;; (after! resript-mode
-;;   (require 'lsp-rescript)
-;;   (add-to-list 'eglot-server-programs '(rescript-mode . ("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio")))
-;;   )
-
-;; (add-hook 'rescript-mode-hook 'eglot-ensure)
-
-;; (with-eval-after-load 'rescript-mode
-;;   ;; Tell `lsp-mode` about the `rescript-vscode` LSP server
-;;   (require 'lsp-rescript)
-;;   ;; Enable `lsp-mode` in rescript-mode buffers
-;; )
-
-(defun retest()
-  "Call retest on current buffer."
-  (interactive)
-
-  (shell-command (format "npm run retest %s" (current-buffer)))
-
-  )
-;;
-;; (after! rescript-mode
-;;  (after! lsp-rescript (add-hook 'rescript-mode-hook 'lsp-deferred))
-;;  (after! lsp-ui (add-hook 'rescript-mode-hook 'lsp-ui-doc-mode)))
-;;
-;;
-;; (map! :localleader
-;;       :map rescript-mode
-;;       "q" #'indent-pp-sexp)
-;; (add-to-list 'auto-mode-alist '("\\.resi*\\'" . rescript-mode))
-;;
-;; /Users/clay/developer/rescript/rescript-vscode/node_modules/.bin
-;;
-;; (after! eglot
-;;   (add-to-list 'eglot-server-programs
-;;                `(rescript-mode . ("tsc" "-b" "-w")))
-;;   )
-
-
-;;
-;;
-;; ;; ** JULIA CONFIG ** ----------->
-;;
-;;
-;; (after! eglot-jl
-;;   (setq eglot-jl-language-server-project eglot-jl-base))
-;; (setq eglot-jl-language-server-project "~/.julia/environments/v1.7")
-;;
-;; (add-hook 'julia-mode-hook 'julia-math-mode)
-;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
 
 ;; ein mode <Juptyer Notebooks>
 (setq ein:output-area-inlined-images t)
@@ -655,3 +655,177 @@ active process."
 
 
 (yas-global-mode 1)
+
+
+;; ;; ** c++ CONFIG ** ----------->
+(set-eglot-client! 'cc-mode '("ccls" "--init={\"index\": {\"threads\": 3}}"))
+
+
+
+;; GPTEL ---->
+(setq
+ gptel-model "llama3"
+ gptel-backend (gptel-make-ollama "Ollama"
+                 :host "localhost:11434"
+                 :stream t
+                 :models '("llama3")))
+
+
+;; LaTeX ----->
+(setq +latex-viewers '(pdf-tools))
+
+
+;; Org Mode ------))
+(setq
+    org-superstar-headline-bullets-list '("✿" "◉" "○" "✸" "⁖")
+)
+
+;; https://github.com/daviwil/emacs-from-scratch/blob/1a13fcf0dd6afb41fce71bf93c5571931999fed8/init.el#L206C1-L257C47
+(require 'org)
+;; (require 'org-bullets)
+(require 'visual-fill-column)
+
+(require 'org-tempo)
+
+(after! org-mode
+  (org-indent-mode)
+  (variable-pitch-mode 1)
+  (visual-line-mode 1))
+
+(defun clm/org-font-setup ()
+  ;; Replace list hyphen with dot
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+  ;; Set faces for heading levels
+  (dolist (face '((org-level-1 . 1.6)
+                  (org-level-2 . 1.45)
+                  (org-level-3 . 1.20)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil :foreground 'unspecified :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+
+(setq org-ellipsis " ▾")
+(clm/org-font-setup)
+
+;; (set-popup-behavior t)
+(setq org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●"))
+
+(defun clm-org-mode-visual-fill ()
+  (setq visual-fill-column-width 100
+        visual-fill-column-center-text t)
+  (visual-fill-column-mode 1))
+
+(add-hook 'org-mode-hook 'clm/org-font-setup)
+(add-hook 'org-mode-hook 'clm-org-mode-visual-fill)
+
+(defun nolinum ()
+  (global-display-line-numbers-mode 0)
+)
+(add-hook 'org-mode-hook 'nolinum)
+
+;; Org Roam
+;;
+ ;; ("^\\*Capture\\*$\\|CAPTURE-.*$" (+popup-buffer) (actions) (side . right)
+ ;;  (size . 0.42) (window-width . 40) (window-height . 0.42) (slot) (vslot)
+ ;;  (window-parameters (ttl . 5) (quit) (select . t) (modeline)
+ ;;                     (autosave . ignore) (transient . t) (no-other-window . t)))
+
+
+;; AucTeX
+(setq TeX-auto-save t)
+(setq TeX-parse-self t)
+(setq-default TeX-master nil)
+(add-hook 'LaTeX-mode-hook 'visual-line-mode)
+(add-hook 'LaTeX-mode-hook 'flyspell-mode)
+(add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+(setq reftex-plug-into-AUCTeX t)
+(setq TeX-PDF-mode t)
+
+;; Use Skim as viewer, enable source <-> PDF sync
+;; make latexmk available via C-c C-c
+;; Note: SyncTeX is setup via ~/.latexmkrc (see below)
+(add-hook 'LaTeX-mode-hook (lambda ()
+  (push
+    '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+      :help "Run latexmk on file")
+    TeX-command-list)))
+(add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk")))
+
+;; use Skim as default pdf viewer
+;; Skim's displayline is used for forward search (from .tex to .pdf)
+;; option -b highlights the current line; option -g opens Skim in the background
+(setq TeX-view-program-selection '((output-pdf "PDF Viewer")))
+(setq TeX-view-program-list
+     '(("PDF Viewer" "/Applications/Skim.app/Contents/SharedSupport/displayline -b -g %n %o %b")))
+
+;; Vterm mode
+;;
+(dolist (mode '(org-mode-hook
+                    term-mode-hook
+                    vterm-mode-hook
+                    shell-mode-hook
+                   treemacs-mode-hook
+                    eshell-mode-hook))
+      (add-hook mode (lambda() (display-line-numbers-mode 0))))
+
+;; Github Copilot ----->
+;;
+
+;; accept completion from copilot and fallback to company
+(after! copilot
+  ;; Enable copilot-mode in prog-mode
+  (add-hook 'prog-mode-hook #'copilot-mode)
+
+  ;; Key bindings for copilot-completion-map
+  (map! :map copilot-completion-map
+        "<tab>" #'copilot-accept-completion
+        "TAB" #'copilot-accept-completion
+        "C-TAB" #'copilot-accept-completion-by-word
+        "C-<tab>" #'copilot-accept-completion-by-word))
+
+
+(after! copilot
+  ;; Enable copilot-mode in prog-mode
+  (add-hook 'prog-mode-hook #'copilot-mode)
+
+  ;; Key bindings for copilot-completion-map
+  (map! :map copilot-completion-map
+        "<tab>" #'copilot-accept-completion
+        "TAB" #'copilot-accept-completion
+        "C-TAB" #'copilot-accept-completion-by-word
+        "C-<tab>" #'copilot-accept-completion-by-word
+        "C-n" #'copilot-next-completion
+        "C-p" #'copilot-previous-completion)
+
+  ;; Configure copilot-indentation-alist
+  (add-to-list 'copilot-indentation-alist '(prog-mode 2))
+  (add-to-list 'copilot-indentation-alist '(org-mode 2))
+  (add-to-list 'copilot-indentation-alist '(text-mode 2))
+  (add-to-list 'copilot-indentation-alist '(closure-mode 2))
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
+
+
+(after! request
+  (setq copilot-chat-frontend 'org))
+
+(require 'copilot-chat-shell-maker)
+(after! copilot-chat
+  (push '(shell-maker . copilot-chat-shell-maker-init) copilot-chat-frontend-list)
+  (setq copilot-chat-frontend 'shell-maker)
+  (setq copilot-chat-model "claude-3.5-sonnet")
+  (copilot-chat-shell-maker-init))
