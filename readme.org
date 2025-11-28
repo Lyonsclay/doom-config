@@ -1,6 +1,6 @@
-#+TITLE: Getting Setup -- giving doom emacs a spin 🚆
+#+TITLE: Getting Spun Up with Doom Emacs 🚆
 #+DATE:    December 3, 2020
-#+SINCE:   <replace with next tagged release version>
+#+SINCE:   0.1.0
 #+STARTUP: inlineimages nofold
 
 * Table of Contents :TOC_3:noexport:
@@ -17,18 +17,12 @@
     - [[#spc-h-t-load-theme-----------][(SPC h t) load-theme           🍆]]
     - [[#spc-o-t-vterm-here-----------][(SPC o t) vterm-here           🌈]]
 - [[#prerequisites][Prerequisites]]
-- [[#features][Features]]
-- [[#configuration][Configuration]]
-- [[#troubleshooting][Troubleshooting]]
-- [[#tips][Tips]]
-- [[#episode-1][Episode 1]]
+- [[#getting-started-driving-doom-emacs-][Getting started driving Doom emacs 🎏]]
   - [[#doom-doctor--][`doom doctor`  👜]]
   - [[#doom-sync-][`doom sync` 🙋🏾]]
-  - [[#migrating-from-spacemacs-][Migrating from spacemacs. ❇]]
-  - [[#live-coding-todos-][Live coding TODOS. 🗒]]
-  - [[#general-assesment][General Assesment]]
-- [[#future-episode-topics][Future Episode Topics]]
-  - [[#setup-sql-driver][Setup sql driver]]
+  - [[#doom-install][`doom install`]]
+- [[#tips-and-tricks][Tips and Tricks]]
+- [[#debugging-and-fixing][debugging and fixing]]
 
 * Description
 # A plan for making this perfect!
@@ -42,7 +36,7 @@
 + treemacs 😺
 + lsp 🐲
 *** private
-+ keychord 🏀
++ keychord 🏀 **Not Working**
 
 ** Goto Commands
 # A list of the best of the best
@@ -55,70 +49,18 @@
 
 * Prerequisites
 + for a more comprehensive list https://github.com/ztlevi/doom-config
-+ brew install emacs-plus/railwaycat (fullscreen works) -- apparently tty issue effects emacs daemon
++ =brew install emacs-head@30 --with-cocoa --with-imagemagick --with-xwidgets --with-native-full-aot --with-tree-sitter --with-native-comp --with-modern-icon-black-dragon=
 + vterm -- yes you want this 👀
-+
 
-* Features
-# An in-depth list of features, how to use them, and their dependencies.
-
-* Configuration
-# How to configure this module, including common problems and how to address them.
-
-* Troubleshooting
-# Common issues and their solution, or places to look for help.
-
-* Tips
-1. If you use ivy(as I do) then you have to scroll by pressing C-M n or C-M p to see previous or next.
-
-* Episode 1
-Test driving Doom emacs 🎏
+* Getting started driving Doom emacs 🎏
 ** `doom doctor`  👜
 Doom comes with a command line interface that is quite nice and enables an easy upgrade experience.
 ** `doom sync` 🙋🏾 
 This command will add/remove packages and update all conigs.
 ** `doom install`
 When you need a clean config. Rename your existing '.doom.d' directory before running this.
-** Migrating from spacemacs. ❇ 
-I did not expect to move completely as quick as I did after first looking at doom. The UX is phenomenal and makes me an immediate fan. I see three important aspects that make this product great!
-a. It looks great.
-   ** so many subtle refinements
-b. The configuration is well organized and facilitates uprade and down grade scenarios. I need to experience the ecosystem through some upgrades before I can't really comment on that aspect of doom. But I can say that having designated files and code patterns which separate private config and user installed packaeges from framework packages and their configs.
-c. Adding go-run function.
-** Live coding TODOS. 🇬🇳
-a. Add a keymap for common activity. (make vterm far right or make magit window far right)
-b. Decide keys for multiple-cursors.
-b. Record setup for project.
-c. Test drive typescript with new pbiviz project.
-d. Add :localleader mapped commands to gorepl.
-   Restart go-repl.
-e. PR for window-move-very-far-right
 
-** General Assesment 🇬🇼
-Migrating to Doom has caused me to take my emacs-elisp to the next level. This is most likely a result of feature loss.
-
-Doom promotes higher level configuration macros ->  
-
-
-* Future Episode Topics
-** Setup sql driver
-0:01:44 
-0:01:33
-
-** configuring dired
-   Dired Omit Extensions
-   Easy Customization interface.
-# This popped up when visting a python file.
-  
-
-# when installing the latest ipython the package jedi needs to be deprecated to <0.18
-# in order to enable tab completion in the terminal.
-
-
--- tips and trics
--- --
--- --
--- --
+* Tips and Tricks
 
 1. ibuffer - is an easy way to delete any buffer from current window.
    To delete a buffer navigate to it in the list(popup window) user j/k,
@@ -144,19 +86,27 @@ Doom promotes higher level configuration macros ->
 
 8. In a terminal shell use (SPC k) to delete highlighted output lines.
 
-------------------------------
--- normal workflows
+9. =(setq gptel-log-level 'debug)= and check the *gptel-log* buffer.
 
-1. Copy current file path
+10. Copy current file path
    a. relative - (SPC f Y)
    b. absolute - (SPC f a)
-2. Show current file in treemacs - (SPC o P)
+      
+11. Show current file in treemacs - (SPC o P)
+    
+12. If you use ivy(as I do) then you have to scroll by pressing C-M n or C-M p to see previous or next.
 
--- debugging and fixing
+------------------------------
+* debugging and fixing
 1. Recently had an issue with a dep that introduced a bug or breaking change. As it turns out I was able to update
    emacs-plus@28 because a change was pushed that accomodates the new xref pattern. But hlissner offered this suggestion on
    discord which is a good tip in general.
-The workaround: pin xref to the last known working ref: a82f459b37b31546bf274388baf8aca79e9c30d9
+   The workaround: pin xref to the last known working ref: a82f459b37b31546bf274388baf8aca79e9c30d9
 
-;; in $DOOMDIR/packages.el
-(package! xref :pin "a82f459b37b31546bf274388baf8aca79e9c30d9")
+    ;; in $DOOMDIR/packages.el
+    =(package! xref :pin "a82f459b37b31546bf274388baf8aca79e9c30d9")=
+
+
+
+2. Why iPython would show error about not having readline. https://www.danliden.com/notes/20240709-python-readline.html
+

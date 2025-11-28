@@ -1,51 +1,62 @@
-;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-python-lsp-server
+;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
 
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
-;; clients, file templates and snippets.
-(setq user-full-name "Clay Morton"
-      user-mail-address "lyonsclay@yahoo.com")
+;; clients, file templates and snippets. It is optional.
+;; (setq user-full-name "John Doe"
+;;       user-mail-address "john@doe.com")
 
-;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
-;; are the three important ones:
+;; Doom exposes five (optional) variables for controlling fonts in Doom:
 ;;
-;; + `doom-font'
-;; + `doom-variable-pitch-font'
-;; + `doom-big-font' -- used for `doom-big-font-mode'; use this for
+;; - `doom-font' -- the primary font to use
+;; - `doom-variable-pitch-font' -- a non-monospace font (where applicable)
+;; - `doom-big-font' -- used for `doom-big-font-mode'; use this for
 ;;   presentations or streaming.
+;; - `doom-symbol-font' -- for symbols
+;; - `doom-serif-font' -- for the `fixed-pitch-serif' face
 ;;
-;; They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
-;; font string. You generally only need these two:
-;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
-;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
-
-;; (setq
-;;  doom-font (font-spec :family "Fira Mono" :size 14)
-;;  doom-variable-pitch-font (font-spec :family "Fira Sans")
-;;  )
-
-(setq doom-font (font-spec :family "Input Mono" :style "Regular" :size 14 :height 1.0)
-      doom-variable-pitch-font (font-spec :family "Input Mono" :style "Regular" :size 13)
-      doom-big-font (font-spec :family "Input Mono" :style "Regular" :size 24))
+;; See 'C-h v doom-font' for documentation and more examples of what they
+;; accept. For example:
+;;
+(setq doom-font (font-spec :family "Fira Code" :size 12 :weight 'semi-light)
+     doom-variable-pitch-font (font-spec :family "Noto Sans" :size 13))
+;;
+;; If you or Emacs can't find your font, use 'M-x describe-font' to look them
+;; up, `M-x eval-region' to execute elisp code, and 'M-x doom/reload-font' to
+;; refresh your font settings. If Emacs still can't find your font, it likely
+;; wasn't installed correctly. Font issues are rarely Doom issues!
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-oceanic-next)
-
-;; If you use `org' and don't want your org files in the default location below,
-;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/org/")
+(setq doom-theme 'doom-one)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
 
+;; If you use `org' and don't want your org files in the default location below,
+;; change `org-directory'. It must be set before org loads!
+(setq org-directory "~/org/")
 
-;; Here are some additional functions/macros that could help you configure Doom:
+
+;; Whenever you reconfigure a package, make sure to wrap your config in an
+;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
+;;
+;;   (after! PACKAGE
+;;     (setq x y))
+;;
+;; The exceptions to this rule:
+;;
+;;   - Setting file/directory variables (like `org-directory')
+;;   - Setting variables which explicitly tell you to set them before their
+;;     package is loaded (see 'C-h v VARIABLE' to look up their documentation).
+;;   - Setting doom variables (which start with 'doom-' or '+').
+;;
+;; Here are some additional functions/macros that will help you configure Doom.
 ;;
 ;; - `load!' for loading external *.el files relative to this one
 ;; - `use-package!' for configuring packages
@@ -58,18 +69,27 @@
 ;; To get information about any of these functions/macros, move the cursor over
 ;; the highlighted symbol at press 'K' (non-evil users must press 'C-c c k').
 ;; This will open documentation for it, including demos of how they are used.
+;; Alternatively, use `C-h o' to look up a symbol (functions, variables, faces,
+;; etc).
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
-;
-;; ----------------------------------------------------------------------------
-;; CUSTOM CODE BELOW THIS POINT.
-;; MIT @COPYRIGHT
-;; USE AT YOUR LEISURE!
-;; ----------------------------------------------------------------------------
+
+
 
 (map! :leader
-      "0" #'treemacs-window
+      :desc "Open like spacemacs" "SPC" #'execute-extended-command)
+
+
+(add-hook 'window-setup-hook #'toggle-frame-maximized)
+
+(setq! evil-escape-excluded-major-modes '())
+
+(add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
+(add-hook 'doom-switch-window-hook (lambda () (save-some-buffers t)))
+
+(map! :leader
+      "0" #'treemacs-select-window
       "1" #'winum-select-window-1
       "2" #'winum-select-window-2
       "3" #'winum-select-window-3
@@ -86,39 +106,23 @@
       "y" #'copy-path
       "k" #'comint-kill-region)
 
+;; ;; multiple cursor quick edit commands
+;; (map!
+;;  "C-(" #'mc/mark-all-like-this
+;;  "C->" #'mc/mark-next-like-this
+;;  "C-<" #'mc/mark-previous-like-this
+;;  "M-)" #'sp-unwrap-sexp)
 
-;; multiple cursor quick edit commands
-(map!
- "C-/" #'mc/mark-all-like-this
- "C->" #'mc/mark-next-like-this
- "C-<" #'mc/mark-previous-like-this
- "M-)" #'sp-unwrap-sexp)
+(use-package! evil-multiedit
+  :after evil
+  :init
+  (map!
+   "M-d"   #'evil-multiedit-match-and-next
+   "M-D"   #'evil-multiedit-match-and-prev
+   "M-a"   #'evil-multiedit--paste
+   "C-M-d" #'evil-multiedit-restore))
 
-
-(map! :leader
-      "SPC" nil
-      "SPC" #'execute-extended-command)
-;; (key-seq-define-global "qd" 'dired)
-
-;; (key-seq-define text-mode-map "qf" 'flyspell-buffer)
-
-(require 'key-chord)
-(key-chord-mode t)
-(key-seq-define-global "jk" 'jkpop)
-(key-seq-define-global "JK" 'jkpop)
-(key-seq-define-global "kj" 'jkpop)
-(key-seq-define-global "JK" 'jkpop)
-(key-seq-define-global "ii" 'caps-lock-mode)
-(key-seq-define-global "=-" 'upcase-word)
-(key-seq-define-global "-=" 'downcase-word)
-
-
-;; RESTORE ctrl-D
-(define-key evil-insert-state-map   (kbd "C-d") #'evil-delete-char)
-(define-key evil-normal-state-map   (kbd "C-d") #'evil-delete-char)
-
-
-;; in elisp file like `this'
+;; in elisp files like `this'
 ;; in other files like `this` 😜
 (after! smartparens
   (sp-pair "`" "`" :wrap "M-`")
@@ -127,132 +131,6 @@
   (sp-pair "<" ">" :wrap "M-<")
   (sp-pair "'" "'" :wrap "M-'")
   (sp-pair "\"" "\"" :wrap "M-\""))
-
-;; The unmapping of "spc m e" needs to happen after a go buffer is being visited, apparently.
-;; (add-hook 'go-mode-hook (lambda ()
-;;                           ;; I want to disable the go playground which is mapped to "spc m e".
-;;                           ;; The go playground will send your code to the web -- bad!
-;;                           (map! :localleader :map go-mode-map :nv "e" nil)
-;;                           (map! :localleader :map go-mode-map "e e" #'go-run)
-;;                           (map! :localleader :map go-mode-map "e p" #'go-prof-test)
-;;                           (map! :localleader :map go-mode-map "t v" #'go-test-verbose)
-;;                           (map! :localleader :map go-mode-map "h d" #'go-guru-definition-other-window)
-;;                           ))
-;; (require 'project)
-
-;; (defun project-find-go-module (dir)
-;;   (when-let ((root (locate-dominating-file dir "go.mod")))
-;;     (cons 'go-module root)))
-
-;; (cl-defmethod project-root ((project (head go-module)))
-;;   (cdr project))
-
-;; (add-hook 'project-find-functions #'project-find-go-module)
-
-;; (map! :localleader
-;;       :map go-mode-map
-;;       "f" #'gofmt
-;;       "e e" #'go-run)
-
-(map! :localleader
-      :map python-mode-map
-      "r" #'ipython-startup-norm
-      "f" #'pipenv-blackify)
-
-(map! :localleader
-      :map sql-mode-map
-      "c" #'sql-connect
-      "r" #'sql-set-sqli-buffer
-      "e e" #'sql-send-paragraph
-      "s" #'tws-region-to-process
-      "v" #'vterm-sql-startup)
-
-(map! :localleader
-      :map emacs-lisp-mode-map
-      "f" #'indent-pp-sexp)
-
-
-(setq ns-auto-hide-menu-bar t)
-(add-to-list 'initial-frame-alist '(fullscreen . maximized))
-(toggle-frame-fullscreen)
-(setq ns-use-native-fullscreen t)
-
-(after! flycheck
-(setq flycheck-check-syntax-automatically '(save))
-(set-popup-rule! "^\\*Flycheck errors\\*$" :side 'bottom :size 0.1)
-)
-;; (setq company-idle-delay 3)
-;; (setq eglot-events-buffer-size 0)
-
-;; never lose your cursor again
-(beacon-mode 1)
-
-;; Emoji: 😄, 🤦, 🏴
-;; How do we get kick ass emojis? It's an eternal quest.
-;;
-; (setq use-default-font-for-symbols nil)
-;; (set-fontset-font t 'symbol "Apple Color Emoji")
-;; (set-fontset-font t 'symbol "Noto Color Emoji" nil 'append)
-;; (set-fontset-font t 'symbol "Segoe UI Emoji" nil 'append)
-;; (set-fontset-font t 'symbol "Symbola" nil 'append)
-;; (setq doom-unicode-font (font-spec :family "Noto Color Emoji"))
-
-;; sometimes any character change deletes the whole line
-;; https://stackoverflow.com/a/3024055/2252501
-(defun stop-using-minibuffer ()
-  "kill the minibuffer"
-  (when (and (>= (recursion-depth) 1) (active-minibuffer-window))
-    (abort-recursive-edit)))
-
-(add-hook 'mouse-leave-buffer-hook 'stop-using-minibuffer)
-
-;; startup is much quicker without loading saved history
-(savehist-mode -1)
-
-;; These two hooks should catch any shift of focus event and save the current buffer
-;; or any unsaved buffer for that matter.
-(add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
-(add-hook 'doom-switch-window-hook (lambda () (save-some-buffers t)))
-
-;; Treemacs --
-;;
-(require 'treemacs)
-
-(setq treemacs-expand-after-init nil)
-;; (setq doom-themes-treemacs-enable-variable-pitch nil)
-;; ace-window is required by treemacs and certain variables are not defined if not loaded here(this is probably a temp work around)
-(require 'ace-window)
-
-
-;; 🌶🌶🌶
-(defun treemacs-window ()
-  "Switch to treemacs; start if not already running."
-  (interactive)
-  ;; If treemacs has not been run in this session we will
-  ;; fire it up. See below...
-  (unless (fboundp 'treemacs-current-visibility)
-    (progn (message "treemacs is 🔥 ready to go 🦎")
-           (treemacs)))
-
-  ;; Need to guard against 'treemacs-current-visibility not being defined,
-  ;; which is only exposed after the first time treemacs is called.
-  ;;
-  ;; 'condition-case' is being used like try/catch.
-  (condition-case nil
-      (if (string= (treemacs-current-visibility) "visible")
-        (evil-window-top-left)
-        (treemacs))
-    (error nil)))
-
-(after! treemacs
-  ;; (irrelevant preferences elided)
-  (setq treemacs-position 'left)
-  (setq treemacs-width 35)
-  ;; workaround here:
-  (set-popup-rule! "^ \\*Treemacs"
-    :side treemacs-position
-    :window-width treemacs-width)
-  )
 
 (defun jkpop ()
   "Prevent caps-lock-mode from being selected."
@@ -272,43 +150,65 @@
                       (message "👼 CAPS-LOCK 👼"))))
     ))
 
-;; (setq scroll-preserve-screen-position t
-(defun toggle-center-scroll ()
-  (interactive)
-  (if (> scroll-margin 0) (center-scroll-off)(center-scroll-on)))
+;; (require 'key-chord)
+;; (key-chord-mode t)
+;; (key-seq-define-global "jk" 'jkpop)
+;; (key-seq-define-global "JK" 'jkpop)
+;; (key-seq-define-global "kj" 'jkpop)
+;; (key-seq-define-global "KJ" 'jkpop)
+;; (key-seq-define-global "ii" 'caps-lock-mode)
+;; (key-seq-define-global "=-" 'upcase-word)
+;; (key-seq-define-global "-=" 'downcase-word)
 
-(defun center-scroll-on ()
-  (interactive)
-  (setq scroll-conservatively 0
-        maximum-scroll-margin 0.5
-        scroll-margin 99999)
-  )
+(setq evil-escape-key-sequence "jk")
+(setq evil-escape-unordered-key-sequence t)
 
-(defun center-scroll-off ()
-  ;; Set the default values
-  (interactive)
-  (setq
-      scroll-conservatively 101
-      maximum-scroll-margin 0.25
-      scroll-margin 0)
-  )
-
-(remove-hook! 'before-save-hook #'+format/buffer)
-;; List of all key bindings for current buffer/mode.
-;; (counsel--descbinds-cands)
-;;
+(dolist (mode '(org-mode-hook
+                    term-mode-hook
+                    vterm-mode-hook
+                    shell-mode-hook
+                   treemacs-mode-hook
+                    eshell-mode-hook))
+      (add-hook mode (lambda() (display-line-numbers-mode 0))))
 
 
-;; This is the best way to get full screen without menu bar and without osx transit animation.
-;; (setq ns-auto-hide-menu-bar t)
-;; (toggle-frame-maximized)
-;; (toggle-frame-fullscreen)
-;; (toggle-frame-fullscreen)
-;;
-;; ;; ** PYTHON CONFIG ** ----------->
-;;
-;;
+;; Eglot      ------>
+;; Prevent change in line height when there are linting hints.
+(setq! eglot-code-action-indications '(eldoc-hint))
 
+;; Treemacs   ------>
+;; Force Treemacs to stay on the far left and full height
+(setq treemacs-is-never-other-window t)
+
+;; Force Treemacs into a dedicated window that won't be resized
+(add-hook 'treemacs-mode-hook
+          (lambda ()
+            (let ((win (get-buffer-window "*Treemacs*")))
+              (when win
+                (set-window-dedicated-p win t)))))
+
+;; Set Flycheck to open at the bottom without affecting other windows
+(add-to-list 'display-buffer-alist
+             '("^\\*Flycheck errors\\*$"
+               (display-buffer-reuse-window display-buffer-at-bottom)
+               (window-height . 0.3)))
+
+
+;; Projectile ------>
+(after! projectile (add-to-list 'projectile-project-root-files "__pycache__"))
+
+;; LSP mode ------->
+(after! lsp-mode
+  (add-to-list 'lsp-file-watch-ignored-directories
+               "\\`/opt/.*\\'"))
+
+;; (lsp-inlay-hints-mode)
+
+
+(setq lsp-inlay-hint-enable t)
+
+
+;; PYTHON ----->
 (defun pipenv-blackify ()
   "Format python code"
   (interactive)
@@ -319,339 +219,229 @@
   (revert-buffer (current-buffer))
   )
 
-;; Ahh pdm; everything worked so well!
-;;
-;; (after! python
-;;   (setq python-shell-interpreter "pdm"
-;;         python-shell-interpreter-args "run ipython --simple-prompt"
-;;       +python-ipython-command '("pdm" "run" "ipython" "-i" "--simple-prompt" "--no-color-info")
-;;       python-shell-prompt-detect-failure-warning nil)
-;;   ;; (add-to-list 'python-shell-completion-native-disabled-interpreters "ipython")
-;;   )
+(defun ipython ()
+  (interactive)
+  (term "ipython"))
+
+;; (add-hook 'vterm-mode-hook (lambda () (vterm-copy-mode -1)))
 
 
-(after! python
-  (require 'lsp-pyright)
-  (setq python-pytest-executable "pytest -vv --disable-warnings")
+;; (add-hook 'inferior-python-mode (setq python-shell-completion-native-enable nil))
+
+
+;; (setq python-shell-interpreter "ipython"
+;;       python-shell-interpreter-args "--simple-prompt -i")
+
+(setq! +python-ipython-command '("ipython" "-i"))
+
+(map! :localleader
+      :map python-mode-map
+      "r" #'+python/open-ipython-repl
+      "f" #'pipenv-blackify)
+
+
+;; RUSTIC ----->
+(map! :localleader
+      :map rustic-mode-map
+      "t r" #'rustic-cargo-test-rerun)
+
+
+(add-hook 'rust-mode-hook (setq rustic-cargo-test-disable-warnings t))
+
+;; TYPESCRIPT  ------->
+(setq tide-format-options
+      '(:indentSize 2
+        :tabSize    2))
+
+;; 1) When you open a .ts file, disable electric-indent
+(add-hook! 'typescript-mode-hook
+  (electric-indent-local-mode -1))
+
+;; 2) When you open a .tsx file (in web-mode), disable electric-indent there too
+(add-hook! 'web-mode-hook
+  (when buffer-file-name
+    (electric-indent-local-mode -1)))
+
+
+;; TREEMACS ---->
+(after! treemacs
+  (setq treemacs-show-cursor t)
+  (setq treemacs-expand-after-init nil)
   )
 
-(defun ipython-startup-norm ()
-  "Set up ipython with hot reloading of code."
-  (interactive)
 
-  (+python/open-ipython-repl)
-  (process-send-string (get-buffer-process (current-buffer)) "%load_ext autoreload\n %autoreload 2\n")
-  (process-send-string (get-buffer-process (current-buffer)) "from IPython.core import ultratb;ultratb.VerboseTB._tb_highlight = 'bg:ansired';"))
+;; GPTEL ---->
 
-(defun ipython-startup ()
-  "Initiate ipython from current buffer with shell command."
-  (interactive)
-  (evil-window-vsplit)
-  (evil-window-right 1)
-  (+vterm/here default-directory)
-  (process-send-string (get-buffer-process (current-buffer)) "ipython -i --simple-prompt -c \"from IPython.core import ultratb;ultratb.VerboseTB._tb_highlight = 'bg:ansired'\n\" \n")
-  (process-send-string (get-buffer-process (current-buffer)) "%load_ext autoreload \n %autoreload 2 \n"))
-
-
-(defun conda-init ()
-  "Create a conda virtual environemnt."
-  (interactive)
-  (shell-command "conda init zsh")
-  (shell-command "conda activate")
+(use-package! gptel
+ :config
+ (setq! gptel-api-key (getenv "OPENAI_API_KEY")))
+;; Set Gemini as default
+(after! gptel
+  (setq
+   gptel-model 'gemini-2.5-flash
+   gptel-backend (gptel-make-gemini "Gemini"
+                   :key (getenv "GEMINI_API_KEY")
+                   :request-params '(:tools [(:google_search ())])
+                   :stream t))
   )
+(gptel-make-anthropic "Claude"          ;Any name you want
+  :stream t                             ;Streaming responses
+  :key (getenv "CLAUDE_API_KEY"))
 
-;; The main reason to use this is to access numpy and pytorch.
-;;
-(defun conda-repl ()
-  "Open an IPython REPL."
+;; (gptel-make-ollama "Ollama"
+;;   :host "localhost:11434"
+;;   :stream t
+;;   :models '(llama3.2))
+
+;; (gptel-make-openai "Github Models llama3.3"
+;;   :host "models.github.ai"
+;;   :endpoint "/inference/chat/completions"
+;;   :stream t
+;;   :key (getenv "GITHUB_TOKEN")
+;;   :models '(Llama-3.3-70B-Instruct))
+
+(after! gptel
+  (setq gptel-use-tools t)
+  (setq gptel-include-reasoning nil))
+
+(load "~/.config/doom/gptel-patch-diff.el")
+
+;; ORG ---->
+;; 
+(defun org-babel-tangle-block()
   (interactive)
-  (require 'python)
-  (shell-command "conda init zsh && conda activate")
-  (let ((python-shell-interpreter "/Users/clay/miniconda3/bin/ipython")
-        (python-shell-interpreter-args
-         (string-join (cdr +python-ipython-command) " ")))
-    (+python/open-repl)))
+  (let ((current-prefix-arg '(4)))
+     (call-interactively 'org-babel-tangle)
+))
 
-;;
-;;
-;; ;; ** GOLANG CONFIG ** ----------->
-;;
-;;
-;;
-(defun go-prof-test ()
-  "output prof details to testing output buffer"
-  (interactive)
-  (defvar go-proof-path (concat (file-name-directory buffer-file-name) "*proof*"))
-  (shell-command (format "go tool pprof --text %scpu.pprof >> %s"
-                         (file-name-directory buffer-file-name) go-proof-path))
-  )
+(map! :localleader
+      :map org-mode-map
+      "D" #'gptel/org-git-apply-diff-at-point
+      "B" #'org-babel-tangle-block)
 
-(defun go-test-verbose ()
-  "pass logs to stderr/stdout through test process"
-  (interactive)
-  (+go--run-tests (concat "-v -run" "='" (match-string-no-properties 2) "'")))
+;; Insure tangle works in org roam file.
+(setq org-id-link-to-org-use-id 'create-if-interactive)
 
-;; ﷽
-;;
-;; ;; ** SQL CONFIG ** ----------->
-;;
-;;
-;;
-;; (add-hook 'sql-mode-hook
-;;           (lambda ()
-;;             (progn
-;;               (setq-default tab-width 4)
-;;               (setq-default sqlup-mode nil)
-;;               )))
-
-;; (add-hook 'sql-mode-hook #'sqlup-mode)
-;; (add-hook 'sql-mode-hook #'(lambda () (message "🖐🏽 configging sql for action 🐲")))
+;; Allow org-babel to provide syntax highlighting.
+(add-to-list 'org-src-lang-modes '("typescript" . typescript-ts))
+(add-to-list 'org-src-lang-modes '("ts" . typescript-ts))
+(add-to-list 'org-src-lang-modes '("tsx" . typescript-ts))
+(add-to-list 'org-src-lang-modes '("json" . js-json))
 
 
-(defun sql-mode-hook-function ()
-  "All your add-ons to `sql-mode'."
-  (setq indent-tabs-mode nil)
-  ;; (setq align-mode-rules-list align-sql-indent-rules-list)
-  (message "SQL - moduls  🦉 ")
-  (setq tab-width 4))
-
-(add-hook 'sql-mode-hook 'sql-mode-hook-function)
-(defun choose-db ()
-  "Prompt user to pick a database to connect to."
-  (interactive)
-  (let ((choices '("districts" "animal")))
-    (set-db "%s" (ido-completing-read "Choose database: " choices ))))
-
-;; clay add on to sql mode -- postgres specific
-;;
-(defun set-db (_ ans)
-  "Set the db conn string specified by ANS."
-  (interactive)
-
-  (defvar clay-db)
-  (defvar gorge)
-  (defvar  animal)
-  (let ((districts "psql -d districts --echo-queries --echo-hidden -P pager=off \n")
-        (gorge "psql -U postgres -h 127.0.0.1 -d gorge --echo-queries --echo-hidden -P pager=off \n")
-        (animal "psql -U postgres -h 127.0.0.1 -d animal --echo-queries --echo-hidden -P pager=off \n"))
-
-    (if (string-equal ans "districts")(setq clay-db districts))
-    (if (string-equal ans "gorge")(setq clay-db gorge))
-    (if (string-equal ans "animal")(setq clay-db animal))
-    )
-    clay-db)
-
-;; (set-db "one" "districts")
-;; A startup function to pair with tws-region-to-process.
-;; **TODO need to review startup functions.
-(defun vterm-sql-startup ()
-  "Call up vterm then send a command to start psql with the given config."
-  (interactive)
-  (let ((start-db (choose-db)))
-    (evil-window-vsplit)
-    (evil-window-right 1)
-    (+vterm/here nil)
-    (start-psql-remote start-db)
-    (evil-window-left 1)
-    ))
-
-(defun start-psql-remote (db)
-  (interactive)
-  (process-send-string (get-buffer-process (current-buffer)) db)
-  (process-send-string (get-buffer-process (current-buffer)) "\\timing \n")
-  (message db)
-  )
-
-;; https://emacs.stackexchange.com/a/37889
-(defun tws-region-to-process (arg beg end)
-  "Send the current region to a process buffer.
-The first time it's called, will prompt for the buffer to
-send to. Subsequent calls send to the same buffer, unless a
-prefix argument is used (C-u), or the buffer no longer has an
-active process."
-  (interactive "P\nr")
-  ;; (message "the args of tws -- ")
-  ;; (message  arg beg end)
-  ;; (print arg)
-  (if (or arg                                ;; user asks for selection
-          (not (boundp 'tws-process-target)) ;; target not set
-          ;; or target is not set to an active process:
-          (not (process-live-p (get-buffer-process
-                                tws-process-target))))
-      (setq tws-process-target
-            (completing-read
-             "Process: "
-             (seq-map (lambda (el) (buffer-name (process-buffer el)))
-                      (process-list)))))
-  (process-send-string tws-process-target "\\echo `date` \n")
-  (process-send-region tws-process-target beg end)
-  (process-send-string tws-process-target "\n ")
-  )
-
-  ;; This value may persist without being set here. We will see.
-  (setq source-directory "/usr/local/Cellar/emacs-plus@28/28.0.50/share/emacs/28.0.50/lisp")
-
-  ;; (sql-set-product-feature 'postgres :prompt-regexp "^[-[:alnum:]_]*=[#>] ")
-  ;; (sql-set-product-feature 'postgres :prompt-cont-regexp
-                           ;; "^[-[:alnum:]_]*[-(][#>] ")
-;; This is not firing when expected as in starting a new sql session.
-;; **TODO need to review sql client methods.
- (add-hook 'sql-login-hook 'clay-sql-login-hook)
- (defun clay-sql-login-hook ()
-   "Custom SQL log-in behaviours. See `sql-login-hook'."
-   ;; n.b. If you are looking for a response and need to parse the
-   ;; response, use `sql-redirect-value' instead of `comint-send-string'.
-   (interactive)
-   (message "Postgres gonna light up -->>   🚀🚀🚀🚀 ")
-   ;; Output each query before executing it. (n.b. this also avoids
-   ;; the psql prompt breaking the alignment of query results.)
-   ;; remote server needs this
-   (comint-send-string sql-buffer "\\set ECHO queries \n")
-   (comint-send-string sql-buffer "\\set VERBOSITY verbose \n")
-   (comint-send-string sql-buffer "\\timing \n"))
-
-;; https://emacs.stackexchange.com/a/16692
-;;
-;; (defun sql-add-newline-first (output)
-;;    "Add newline to beginning of OUTPUT for `comint-preoutput-filter-functions'"
-;;   (concat "\n" output))
-
-;; (defun sqli-add-hooks ()
-;;   "Add hooks to `sql-interactive-mode-hook'."
-;;   (add-hook 'comint-preoutput-filter-functions
-;;             'sql-add-newline-first))
-
-;; (add-hook 'sql-interactive-mode-hook 'sqli-add-hooks)
+;; https://github.com/daviwil/emacs-from-scratch/blob/1a13fcf0dd6afb41fce71bf93c5571931999fed8/init.el#L206C1-L257C47
+(require 'org-bullets)
+(require 'visual-fill-column)
 
 
+;; (setq org-src-fontify-natively t)
 
-;; javascript rjsx-mode
-;;
-;; (setq-hook! 'rjsx-mode-hook +format-with :none)
+;; (setq org-ellipsis " ▾")
 
-(use-package web-mode
-  :hook ((web-mode . lsp)
-         (typescript-tsx-mode . lsp))
-  :mode (("\\.html\\'" . web-mode)
-         ("\\.html\\.eex\\'" . web-mode)
-         ("\\.html\\.tera\\'" . web-mode)
-         ("\\.tsx\\'" . typescript-tsx-mode))
-  :init
-  (define-derived-mode typescript-tsx-mode typescript-mode "TypeScript-tsx")
+(setq org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●"))
+
+
+(require 'org-modern)
+(after! org
+  ;; Load org-modern and enable it in org-mode and agenda
+
+  (add-hook 'org-mode-hook #'org-modern-mode)
+  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
+
+  ;; Appearance customization
+  (setq
+   ;; Headline bullets
+   org-modern-star '("◉" "○" "✿" "✸" "⁖")
+   org-modern-hide-stars nil
+
+   ;; Folding symbol
+   org-ellipsis "…"
+
+   ;; Checklist symbols
+   org-modern-checkbox '((?X . "✔") (?- . "✘") (?\s . "☐"))
+
+   ;; Block and quote appearance
+   org-modern-block-name '("⟦" . "⟧")
+   org-modern-block-fringe nil
+
+   ;; Horizontal rules
+   org-modern-horizontal-rule '(-0.5)
+
+   ;; Hide tag brackets
+   org-modern-tag nil))
+
+(defun clm-org-mode-visual-fill ()
+  (setq visual-fill-column-width 100
+        visual-fill-column-center-text t)
+  (visual-fill-column-mode 1))
+
+(add-hook 'org-mode-hook #'clm-org-mode-visual-fill)
+
+
+(defun nolinum ()
+  (global-display-line-numbers-mode 0)
+)
+(add-hook 'org-mode-hook 'nolinum)
+
+;; Org Latex integeration ----->
+
+;; (add-to-list 'org-preview-latex-process-alist
+;;              '(tectonic :programs ("tectonic" "convert")
+;;                         :description "pdf > png"
+;;                         :message "you need install the programs: tectonic and imagemagick."
+;;                         :image-input-type "pdf"
+;;                         :image-output-type "png"
+;;                         :image-size-adjust (1.0 . 1.0)
+;;                         :latex-compiler
+;;                         ("tectonic -Z shell-escape-cwd=%o --outfmt pdf --outdir %o %f")
+;;                         :image-converter
+;;                         ("convert -density %D -trim -antialias %f -quality 300 %O")))
+;; (setq org-preview-latex-default-process 'tectonic)
+(use-package org-latex-preview
   :config
-  (setq web-mode-markup-indent-offset 2
-        web-mode-css-indent-offset 2
-        web-mode-code-indent-offset 2))
+  ;; Increase preview width
+  (plist-put org-latex-preview-appearance-options
+             :page-width 0.8)
 
-(use-package prettier
-  :hook ((typescript-tsx-mode . prettier-mode)
-         (typescript-mode . prettier-mode)
-         (js-mode . prettier-mode)
-         (json-mode . prettier-mode)
-         (css-mode . prettier-mode)
-         (scss-mode . prettier-mode)))
+  ;; ;; Use dvisvgm to generate previews
+  ;; ;; You don't need this, it's the default:
+  ;; (setq org-latex-preview-process-default 'dvisvgm)
+  
+  ;; Turn on `org-latex-preview-mode', it's built into Org and much faster/more
+  ;; featured than org-fragtog. (Remember to turn off/uninstall org-fragtog.)
+  (add-hook 'org-mode-hook 'org-latex-preview-mode)
 
-(require 'prettier-js)
+  ;; ;; Block C-n, C-p etc from opening up previews when using `org-latex-preview-mode'
+  ;; (setq org-latex-preview-mode-ignored-commands
+  ;;       '(next-line previous-line mwheel-scroll
+  ;;         scroll-up-command scroll-down-command))
 
-(define-derived-mode tsx-mode typescript-mode
-  "typescript but better because such X")
+  ;; ;; Enable consistent equation numbering
+  ;; (setq org-latex-preview-numbered t)
 
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-;; (require 'eglot)
-;; (add-to-list 'eglot-server-programs '(web-mode . ("typescript-language-server" "--stdio")))
+  ;; Bonus: Turn on live previews.  This shows you a live preview of a LaTeX
+  ;; fragment and updates the preview in real-time as you edit it.
+  ;; To preview only environments, set it to '(block edit-special) instead
+  (setq org-latex-preview-mode-display-live t)
 
-;;
-;; ;; ** RESCRIPT CONFIG ** ----------->
-;;
-;;
-;;
+  ;; More immediate live-previews -- the default delay is 1 second
+  (setq org-latex-preview-mode-update-delay 0.25))
 
-;; https://github.com/jjlee/rescript-mode#how-to-get-it-working
-;; Tell `rescript-mode` how to run your copy of `server.js` from rescript-vscode
-;; (you'll have to adjust the path here to match your local system):
-;; (customize-set-variable
-;;   'lsp-rescript-server-command
-;;     '("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio"))
+;; (setq! org-latex-preview-appearance-options  '(:foreground auto :background "Transparent" :scale 1.0 :zoom 1.5 :page-width 0.6 :matchers ("begin" "$1" "$" "$$" "\\(" "\\[")))
 
-;; (after! resript-mode
-;;   (require 'lsp-rescript)
-;;   (add-to-list 'eglot-server-programs '(rescript-mode . ("node" "~/developer/rescript-vsode/extension/server/out/server.js" "--stdio")))
-;;   )
+;; New Org Roam windows ------>
+;; Reuse same window for Org files
+(add-to-list 'display-buffer-alist
+             '("\\.org\\'" (display-buffer-same-window)))
 
-;; (add-hook 'rescript-mode-hook 'eglot-ensure)
-
-;; (with-eval-after-load 'rescript-mode
-;;   ;; Tell `lsp-mode` about the `rescript-vscode` LSP server
-;;   (require 'lsp-rescript)
-;;   ;; Enable `lsp-mode` in rescript-mode buffers
-;; )
-
-(defun retest()
-  "Call retest on current buffer."
-  (interactive)
-
-  (shell-command (format "npm run retest %s" (current-buffer)))
-
-  )
-;;
-;; (after! rescript-mode
-;;  (after! lsp-rescript (add-hook 'rescript-mode-hook 'lsp-deferred))
-;;  (after! lsp-ui (add-hook 'rescript-mode-hook 'lsp-ui-doc-mode)))
-;;
-;;
-;; (map! :localleader
-;;       :map rescript-mode
-;;       "q" #'indent-pp-sexp)
-;; (add-to-list 'auto-mode-alist '("\\.resi*\\'" . rescript-mode))
-;;
-;; /Users/clay/developer/rescript/rescript-vscode/node_modules/.bin
-;;
-;; (after! eglot
-;;   (add-to-list 'eglot-server-programs
-;;                `(rescript-mode . ("tsc" "-b" "-w")))
-;;   )
+;; Keep the capture buffer in the same window too
+(dolist (re '("\\`\\*Capture\\*\\'" "\\`\\*Org Capture\\*\\'"))
+  (add-to-list 'display-buffer-alist
+               `(,re (display-buffer-same-window))))
 
 
-;;
-;;
-;; ;; ** JULIA CONFIG ** ----------->
-;;
-;;
-;; (after! eglot-jl
-;;   (setq eglot-jl-language-server-project eglot-jl-base))
-;; (setq eglot-jl-language-server-project "~/.julia/environments/v1.7")
-;;
-;; (add-hook 'julia-mode-hook 'julia-math-mode)
-;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
-
-;; ein mode <Juptyer Notebooks>
-(setq ein:output-area-inlined-images t)
-;; enable undo in ein buffer
-(add-hook 'fundamental-mode 'turn-on-undo-tree-mode)
 
 
-;; Got this from the internet -
-;; - an issue in keycast repo -
-;; someone pasted this code specific to working in doom.
-(after! keycast
-  (define-minor-mode keycast-mode
-    "Show current command and its key binding in the mode line."
-    :global t
-    (if keycast-mode
-        (add-hook 'pre-command-hook 'keycast-mode-line-update t)
-      (remove-hook 'pre-command-hook 'keycast-mode-line-update))))
-(add-to-list 'global-mode-string '("" mode-line-keycast))
+;; Terraform/OpenTofu ------>>>>
 
-(defun toggle-log-keys ()
-  "Send all keystrokes to dedicated buffer."
-  (interactive)
-  (command-log-mode)
-  (global-command-log-mode)
-  (clm/toggle-command-log-buffer))
-
-;; Using after! instead of mode-hook avoids calling the window size function more than once 🚅
-(after! command-log-mod
-  (setq command-log-mode-window-size 50))
-
-
-(yas-global-mode 1)
+(setq! terraform-command "tofu")
