@@ -51,9 +51,10 @@
 (package! prettier-js)
 ;; (package! gptel
 ;;   :recipe (:local-repo "/Users/claymorton/developer/gptel"))
-(package! gptel
-  :recipe (:host github :repo "karthink/gptel" :branch "master"))
-
+;; (package! gptel
+;;   :recipe (:host github :repo "karthink/gptel" :branch "master"))
+(package! gptel :pin nil)
+;; (package! gptel :disable t)
 
 ;; (package! key-chord)
 (package! key-seq)
@@ -104,3 +105,4 @@
 
 (package! org-modern)
 (package! org-bullets)
+
