@@ -89,8 +89,8 @@ When you need a clean config. Rename your existing '.doom.d' directory before ru
 9. =(setq gptel-log-level 'debug)= and check the *gptel-log* buffer.
 
 10. Copy current file path
-   a. relative - (SPC f Y)
-   b. absolute - (SPC f a)
+    a. relative - (SPC f Y)
+    b. absolute - (SPC f a)
       
 11. Show current file in treemacs - (SPC o P)
     
