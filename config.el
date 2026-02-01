@@ -283,18 +283,30 @@ If the current buffer is not visiting a file, it copies nil."
 
 ;; GPTEL ---->
 
+(setq! gptel-context-restrict-to-project-files nil)
+
+;; 1. Load the tool definitions BEFORE creating presets that use them
+(load "~/.config/doom/gptel-patch-diff.el")
+
+
+(with-eval-after-load 'gptel
+  (define-key gptel-mode-map (kbd "<normal-state> RET") nil)
+  (define-key gptel-mode-map (kbd "<visual-state> RET") nil)
+  (message "Disabled gptel-send on RET in gptel-mode-map for Normal and Visual states."))
+
 (use-package! gptel
  :config
  (setq! gptel-api-key (getenv "OPENAI_API_KEY")))
+
 ;; Set Gemini as default
 (after! gptel
   (setq
    gptel-model 'gemini-2.5-flash
    gptel-backend (gptel-make-gemini "Gemini"
                    :key (getenv "GEMINI_API_KEY")
-                   :request-params '(:tools [(:google_search ())])
                    :stream t))
   )
+
 (gptel-make-anthropic "Claude"          ;Any name you want
   :stream t                             ;Streaming responses
   :key (getenv "CLAUDE_API_KEY"))
