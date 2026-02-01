@@ -88,6 +88,17 @@
 (add-function :after after-focus-change-function (lambda () (save-some-buffers t)))
 (add-hook 'doom-switch-window-hook (lambda () (save-some-buffers t)))
 
+(defun copy-path ()
+  "Copy the full path of the current file to the kill ring.
+If the current buffer is not visiting a file, it copies nil."
+  (interactive)
+  (let ((filepath (buffer-file-name)))
+    (if filepath
+        (progn
+          (kill-new filepath)
+          (message "Copied path: %s" filepath))
+      (message "No file associated with current buffer."))))
+
 (map! :leader
       "0" #'treemacs-select-window
       "1" #'winum-select-window-1
