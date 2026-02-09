@@ -141,7 +141,8 @@ If the current buffer is not visiting a file, it copies nil."
   (sp-pair "{" "}" :wrap "M-{")
   (sp-pair "<" ">" :wrap "M-<")
   (sp-pair "'" "'" :wrap "M-'")
-  (sp-pair "\"" "\"" :wrap "M-\""))
+  (sp-pair "\"" "\"" :wrap "M-\"")
+  (sp-pair "=" "=" :wrap "M-="))
 
 (defun jkpop ()
   "Prevent caps-lock-mode from being selected."
