@@ -287,6 +287,7 @@ If the current buffer is not visiting a file, it copies nil."
 (setq! gptel-context-restrict-to-project-files nil)
 
 ;; 1. Load the tool definitions BEFORE creating presets that use them
+(load "~/.config/doom/gptel-agents.el")
 (load "~/.config/doom/gptel-patch-diff.el")
 
 
@@ -327,35 +328,6 @@ If the current buffer is not visiting a file, it copies nil."
 (after! gptel
   (setq gptel-use-tools t)
   (setq gptel-include-reasoning nil))
-
-(gptel-make-preset "clarify-api-build-context"
-  :description "Clarify API context builder"
-  :context '("/Users/claymorton/developer/clarify-api/llm-docs/CLARIFY_IQ_BACKEND_CONTEXT.md"
-             "/Users/claymorton/developer/clarify-api/llm-docs/file-tree.md")
-  :system "You are a expert coding assistant in an Emacs org roam buffer. Please provide the user with a list of files neccesary to complete the request they have made.")
-
-
-(gptel-make-preset "clarify-ui-context-builder"
-  :description "Clarify API context builder"
-  :context '("/Users/claymorton/developer/clarify-ui/llm-docs/CLARIFY_IQ_LLM_CONTEXT.md"
-             "/Users/claymorton/developer/clarify-ui/llm-docs/file-tree.md")
-  :system "You are a expert coding assistant in an Emacs org roam buffer. Please provide the user with a list of files neccesary to complete the request they have made.")
-
-(gptel-make-preset "clarify-fullstack-context-builder"
-  :description "Clarify fullstack context builder"
-  :backend "Gemini"
-  :model 'gemini-2.5-flash
-  :context '("/Users/claymorton/developer/clarify-api/llm-docs/CLARIFY_IQ_BACKEND_CONTEXT.md"
-             "/Users/claymorton/developer/clarify-api/llm-docs/file-tree.md"
-             "/Users/claymorton/developer/clarify-ui/llm-docs/CLARIFY_IQ_LLM_CONTEXT.md"
-             "/Users/claymorton/developer/clarify-ui/llm-docs/file-tree.md")
-  :system "You are a expert coding assistant in an Emacs org roam buffer. Please provide the user with a list of files neccesary to complete the request they have made.")
-
-
-;; ORG ---->
-;;
-
-
 
 (after! org-roam
   ;; 1. Tell Doom's popup system to ignore Org Roam and Capture buffers
