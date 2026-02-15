@@ -84,6 +84,9 @@ With prefix arg THREEWAY (C-u), try =git apply --3way= in the final step."
 
 ;;;; --- 2) System prompt for consistent, git-apply-ready diffs ---------------
 
+(declare-function gptel-get-tool "gptel-agents")
+(defvar gptel-agents--context-management-instructions)
+
 (with-eval-after-load 'gptel
   (defconst gptel-patch-diff--system
     "You are a coding assistant that proposes changes as separate diffs in Emacs org mode source blocks that can be applied with =git apply=. Follow these rules exactly:
@@ -138,8 +141,15 @@ With prefix arg THREEWAY (C-u), try =git apply --3way= in the final step."
 -  Surrounding strings or template literals with equal signs i.e. =var_name= is only an org mode standard.
 
 -  Most programming languages implement string interpolation with other characters like backticks i.e in typescript `Hello ${var_name}`.
+
+*5)
 "
     "System prompt used by the gptel “patch-diff” directive/preset.")
+
+  (defconst gptel-patch-diff--system-with-context
+    (concat gptel-patch-diff--system
+            (or (bound-and-true-p gptel-agents--context-management-instructions) ""))
+    "System prompt for patch-diff with context management capabilities.")
 
   ;; Make it selectable from gptel’s “System directives” menu.
   ;; (This is the built-in alist gptel uses for system prompts.)
@@ -147,6 +157,9 @@ With prefix arg THREEWAY (C-u), try =git apply --3way= in the final step."
   (setq gptel-directives
         (cons (cons 'patch-diff gptel-patch-diff--system)
               (assq-delete-all 'patch-diff gptel-directives)))
+  (setq gptel-directives
+        (cons (cons 'patch-diff-context gptel-patch-diff--system-with-context)
+              (assq-delete-all 'patch-diff-context gptel-directives)))
 
   ;; Also provide a preset that sets just the system message.
   ;; You can activate it from gptel’s menu or via @patch-diff in a prompt.
@@ -155,7 +168,15 @@ With prefix arg THREEWAY (C-u), try =git apply --3way= in the final step."
     (gptel-make-preset 'patch-diff
       :description "Org =diff= blocks with a/b paths; apply via git"
       :system gptel-patch-diff--system
-      :temperature 0)))
+      :temperature 0)
+
+    ;; Preset with context management tools enabled
+    (when (require 'gptel-agents nil t)
+      (gptel-make-preset 'patch-diff-context
+        :description "Org =diff= blocks with context management"
+        :system gptel-patch-diff--system-with-context
+        :tools (list (gptel-get-tool "context_manager"))
+        :temperature 0))))
 
 (provide 'gptel-patch-diff)
 ;;; gptel-patch-diff.el ends here
