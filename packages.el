@@ -49,33 +49,30 @@
 ;; (unpin! t)
 
 (package! prettier-js)
+(package! gptel
+  :recipe (:local-repo "/Users/claymorton/developer/gptel"))
 ;; (package! gptel
-;;   :recipe (:local-repo "/Users/claymorton/developer/gptel"))
-;; (package! gptel
-;;   :recipe (:host github :repo "karthink/gptel" :branch "master"))
-(package! gptel :pin nil)
+  ;; :recipe (:host github :repo "karthink/gptel" :branch "master"))
+;; (package! gptel :pin nil)
 ;; (package! gptel :disable t)
 
 ;; (package! key-chord)
 (package! key-seq)
 (package! caps-lock)
-
-
 (package! visual-fill-column)
 
-;; (package! copilot
-;;   :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
-;; (package! copilot-chat)
-
 (package! justl :recipe (:host github :repo "psibi/justl.el"))
-
 (package! just-mode)
 
-(package! macher
-  :recipe (:host github :repo "kmontag/macher" :files (:defaults "macher-*.el" "tools/*.el")))
+;; (package! shell-maker
+;;   :recipe (:host github :repo "xenodium/shell-maker" :branch "main"))
+(package! shell-maker)
+(package! acp)
+(package! agent-shell)
 
+(package! eca :recipe (:host github :repo "editor-code-assistant/eca-emacs" :files ("*.el")))
 
-
+;; This enables org latex preview.
 (package! org :recipe
   (:host nil :repo "https://git.tecosaur.net/mirrors/org-mode.git" :remote "mirror" :fork
          (:host nil :repo "https://git.tecosaur.net/tec/org-mode.git" :branch "dev" :remote "tecosaur")
@@ -99,10 +96,18 @@
               (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
               "(provide 'org-version)\n"))))
   :pin nil)
-
 (unpin! org)
 
+(package! markdown-xwidget
+  :recipe (:host github
+           :repo "cfclrk/markdown-xwidget"
 
-(package! org-modern)
-(package! org-bullets)
+           :files (:defaults "resources")))
+(package! grip-mode)
 
+
+;; CLOJURE  ------>
+(package! jarchive)
+
+(package! lsp-biome
+  :recipe (:host github :repo "cxa/lsp-biome"))
