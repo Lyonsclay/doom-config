@@ -361,24 +361,25 @@
   (setq gptel-include-reasoning nil)
   (setq gptel-context-restrict-to-project-files nil)
 
-  (defun my/gptel-indent-source-blocks (beg end)
-    "Indent all Org source blocks in the newly inserted gptel response."
+  (defun my/gptel-escape-source-blocks (beg end)
+    "Prepend a space to lines starting with an asterisk in new gptel responses."
     (when (derived-mode-p 'org-mode)
       (save-excursion
-        (goto-char beg)
-        (while (re-search-forward "^[ \t]*#\\+begin_src" end t)
-                (goto-char (match-beginning 0))
-          (let ((element (org-element-at-point)))
-            (when (eq (car element) 'src-block)
-              (save-excursion
-                (goto-char (org-element-property :post-affiliated element))
-                (forward-line 1)
-                (let ((cbeg (point)))
-                  (goto-char (org-element-property :end element))
-                  (when (re-search-backward "^[ \t]*#\\+end_src" cbeg t)
-                    (indent-rigidly cbeg (point) 2))))
-              (goto-char (org-element-property :end element))))))))
-  (add-hook 'gptel-post-response-functions #'my/gptel-indent-source-blocks))
+        (let ((case-fold-search nil)
+              (end-marker (copy-marker end)))
+          (goto-char beg)
+          (while (re-search-forward "^[ \t]*#\\+begin_src" end-marker t)
+            (let ((cbeg (line-beginning-position 2)))
+              (when (re-search-forward "^[ \t]*#\\+end_src" end-marker t)
+                (let ((cend (copy-marker (line-beginning-position))))
+                  (when (< cbeg cend)
+                    (save-excursion
+                      (goto-char cbeg)
+                      (while (re-search-forward "^\\*" cend t)
+                        (replace-match " *" nil nil))))
+                  (set-marker cend nil)))))))))
+  (remove-hook 'gptel-post-response-functions #'my/gptel-indent-source-blocks)
+  (add-hook 'gptel-post-response-functions #'my/gptel-escape-source-blocks))
 
 ;; Agent Shell ------>
 (setopt agent-shell-show-context-usage-indicator t)
@@ -429,8 +430,8 @@
 ;;  '((dot . t))) ; this line activates dot
 
 (after! org
-  (setq org-src-preserve-indentation nil
-        org-src-content-indentation 2)
+  (setq org-src-preserve-indentation t
+        org-src-content-indentation 0)
   (require 'org-modern)
   (add-hook 'org-mode-hook #'org-modern-mode)
   ;; Optional: Customize headline bullets
@@ -444,21 +445,25 @@
      (call-interactively 'org-babel-tangle)
 ))
 
-(defun my/org-indent-source-block-at-point ()
-  "Indent the contents of the Org source block at point."
+(defun my/org-escape-source-block-at-point ()
+  "Prepend a space to lines starting with an asterisk in the current block."
   (interactive)
-  (when (derived-mode-p 'org-mode)
-    (let ((element (org-element-at-point)))
-      (when (eq (car element) 'src-block)
-        (save-excursion
-          (goto-char (org-element-property :post-affiliated element))
-          (forward-line 1)
-          (let ((cbeg (point)))
-            (goto-char (org-element-property :end element))
-            (when (re-search-backward "^[ \t]*#\\+end_src" cbeg t)
-              (indent-rigidly cbeg (point) 2))))
-
-        (message "Indented source block.")))))
+  (save-excursion
+    (let ((case-fold-search nil)
+          (start-pos (point)))
+      (when (re-search-backward "^[ \t]*#\\+begin_src" nil t)
+        (let ((block-start (point))
+              (cbeg (line-beginning-position 2)))
+          (when (re-search-forward "^[ \t]*#\\+end_src" nil t)
+            (let ((cend (copy-marker (line-beginning-position)))
+                  (block-end (point)))
+              (when (and (>= start-pos block-start) (<= start-pos block-end))
+                (save-excursion
+                  (goto-char cbeg)
+                  (while (re-search-forward "^\\*" cend t)
+                    (replace-match " *" nil nil)))
+                (message "Escaped asterisks in source block.")
+                (set-marker cend nil)))))))))
 
 (map! :localleader
       :map org-mode-map
