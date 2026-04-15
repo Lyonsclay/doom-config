@@ -26,12 +26,12 @@ This is non-standard for Org Babel but provides a useful shorthand."
   "Apply the unified diff in the Org src block at point using =git apply=.
 
 The function determines the target repository directory in this order:
-1. The value of a =:dir= header in the block.
-2. A path provided on the #+begin_src line itself.
+1. The value of a =:dir= header in the block (via Babel).
+2. The value of a =:dir= header or shorthand path (via manual regex).
 3. The root of the git repo containing the current buffer's file.
 4. The directory of the current buffer.
 
-With prefix arg THREEWAY (C-u), try =git apply --3way= in the final step."
+With prefix arg THREEWAY (C-u), try =git apply --3way=."
   (interactive "P")
   (let* ((info (or (ignore-errors (org-babel-get-src-block-info 'light))
                    (user-error "Place point inside the diff src block to apply")))
@@ -45,19 +45,27 @@ With prefix arg THREEWAY (C-u), try =git apply --3way= in the final step."
                            (gptel/org-git-get-dir-from-src-line)
                            (and (buffer-file-name) (vc-root-dir))
                            default-directory))
+             ;; Ensure we have a clean absolute path for the repo root
              (default-directory (file-name-as-directory (expand-file-name repo-dir)))
              (tmp (make-temp-file "org-diff-" nil ".patch"))
              (buf (get-buffer-create "*gptel git apply*"))
              (exit 0))
+
+        ;; CRITICAL FIX: Force the output buffer to use the repo directory.
+        ;; This ensures that subsequent calls to git inside this buffer
+        ;; (like the --reject retry) happen in the correct place.
+        (with-current-buffer buf
+          (setq default-directory repo-dir))
+
         ;; Write patch to a temporary file
         (with-temp-file tmp
           (set-buffer-file-coding-system 'unix)
           (insert patch)
           (unless (string-suffix-p "\n" patch) (insert "\n")))
 
-        ;; 1. Attempt to apply the patch directly and safely.
+        ;; 1. Attempt to apply the patch directly.
         (with-current-buffer buf (erase-buffer))
-        (let ((apply-args (append '("--whitespace=fix" "--recount" "--ignore-whitespace")
+        (let ((apply-args (append '("--whitespace=fix" "--recount" "--ignore-whitespace" "--verbose")
                                   (when threeway '("--3way"))
                                   (list tmp))))
           (setq exit (apply #'call-process "git" nil buf t "apply" apply-args)))
@@ -68,18 +76,23 @@ With prefix arg THREEWAY (C-u), try =git apply --3way= in the final step."
           (if (yes-or-no-p "git apply failed. Try again with --reject to create .rej files?")
               (progn
                 (with-current-buffer buf (erase-buffer))
+                ;; We re-run with --reject. Since we set default-directory on 'buf' above,
+                ;; this will now correctly run in ~/developer/gptel
                 (setq exit (call-process "git" nil buf t "apply"
-                                         "--reject" "--recount" "--ignore-whitespace" tmp))
+                                         "--reject" "--recount" "--ignore-whitespace" "--verbose" tmp))
                 (if (zerop exit)
                     (message "Applied with --reject. Inspect any *.rej files and finish manually.")
                   (pop-to-buffer buf)
-                  (error "git apply --reject also failed. See *gptel git apply*")))
+                  (message "git apply --reject also failed (exit code %d). See buffer for details." exit)))
             ;; User chose not to try --reject
+            (message "Aborted. Patch file left at: %s" tmp)
             (cl-return-from gptel/org-git-apply-diff-at-point)))
 
-        ;; 3. Report final success if exit code was zero at any point.
+        ;; 3. Report final success
         (when (zerop exit)
-          (message "git apply: patch applied successfully in %s" repo-dir))))))
+          (message "git apply: patch applied successfully in %s" repo-dir)
+          ;; Only delete tmp file on success to aid debugging if it failed
+          (delete-file tmp))))))
 
 
 ;;;; --- 2) System prompt for consistent, git-apply-ready diffs ---------------
