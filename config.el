@@ -593,9 +593,3 @@
         grip-preview-in-webkit t
         grip-sleep-time 3))
 
-(load! "org-gfm-preview")
-(map! :localleader
-      :map org-mode-map
-      "m p" #'org-gfm-preview-toggle
-      "m e" #'org-gfm-preview-execute)
-
