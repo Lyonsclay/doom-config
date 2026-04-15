@@ -106,7 +106,37 @@ When you need a clean config. Rename your existing '.doom.d' directory before ru
     ;; in $DOOMDIR/packages.el
     =(package! xref :pin "a82f459b37b31546bf274388baf8aca79e9c30d9")=
 
-
-
 2. Why iPython would show error about not having readline. https://www.danliden.com/notes/20240709-python-readline.html
 
+3. **Stale byte-code (.elc) with local packages**
+   If changes to a local repo aren't reflecting, Doom is likely loading stale compiled files.
+   - **Fix:** Run ~doom build~ in the terminal to recompile.
+   - **Prevention:** Disable compilation for that package in ~packages.el~:
+     #+begin_src elisp
+     ;; Not sure if this works.
+     (package! gptel :recipe (:local-repo "..." :build (:not compile)))
+     #+end_src
+   - **Safety:** Add ~(setq load-prefer-newer t)~ to ~config.el~ to always prefer ~.el~ source files if they are newer than the compiled ~.elc~.
+
+4. **Ealuating changes immediately**
+   To see code changes without restarting:
+   - ~M-x eval-buffer~: Reload the entire file.
+   - ~C-M-x~ (or ~SPC m e f~): Evaluate the function at point.
+   - ~M-x load-file~: Manually reload a specific file from disk.
+
+5. *Toggle debug on error*
+   Provide full stack trace to =minibuffer=.
+   #+begin_src elisp
+   (toggle-debug-on-error)
+   #+end_src
+
+   #+RESULTS:
+   : t
+
+6. When Treemacs commands are not available use the following to refresh.
+
+    #+begin_src elisp
+   (evil-motion-state)
+   #+end_src
+
+    #+RESULTS:
