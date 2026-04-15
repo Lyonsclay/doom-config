@@ -23,6 +23,7 @@
 (require 'gptel-context)
 (require 'project)
 (require 'cl-lib)
+(require 'subr-x)
 
 (defgroup gptel-agents nil
   "Agent presets and tools for gptel."
@@ -42,8 +43,12 @@ cannot be detected via =project-current'."
 (defun gptel-agents--project-root (&optional buffer)
   "Return the project root for BUFFER, or nil if none can be detected."
   (with-current-buffer (or buffer (current-buffer))
-    (let ((proj (project-current nil)))
+    (let ((featured (and (boundp 'gptel-context-manager-roots)
+                         (car-safe gptel-context-manager-roots)))
+          (proj (project-current nil)))
       (cond
+       ((and (stringp featured) (not (string-empty-p featured)))
+        (expand-file-name featured))
        (proj (expand-file-name (project-root proj)))
        ((and gptel-agents-project-root-fallback
              (file-directory-p gptel-agents-project-root-fallback))
@@ -70,17 +75,18 @@ relative to that root.  Otherwise expand relative to BUFFER's
 FILES is a list of file paths. BUFFER defaults to current buffer."
   (let ((buf (or buffer (current-buffer)))
         (added-count 0))
-    (dolist (file files)
-      (let* ((expanded (gptel-agents--normalize-context-path file buf))
-             (root (gptel-agents--project-root buf)))
-        (if (file-exists-p expanded)
-            (progn
-              (gptel-context-add-file expanded buf)
-              (cl-incf added-count))
-          (message "gptel-agents: File not found: %s (expanded to %s%s)"
-                   file
-                   expanded
-                   (if root (format ", root %s" root) "")))))
+    (with-current-buffer buf
+      (dolist (file files)
+        (let* ((expanded (gptel-agents--normalize-context-path file buf))
+               (root (gptel-agents--project-root buf)))
+          (if (file-exists-p expanded)
+              (progn
+                (gptel-context-add-file expanded)
+                (cl-incf added-count))
+            (message "gptel-agents: File not found: %s (expanded to %s%s)"
+                     file
+                     expanded
+                     (if root (format ", root %s" root) ""))))))
     (format "Added %d file(s) to context." added-count)))
 
 (defun gptel-agents--context-remove-files (files &optional buffer)
@@ -122,8 +128,9 @@ FILES is a list of file paths. BUFFER defaults to current buffer."
 (defun gptel-agents--search-project (query &optional mode)
   "Search the current project for QUERY.
 MODE can be \"content\" (default) or \"filename\"."
-  (let* ((proj (project-current))
-         (root (if proj (project-root proj) default-directory))
+  (let* ((root (or (gptel-agents--project-root (current-buffer))
+                   (let ((proj (project-current))) (and proj (project-root proj)))
+                   default-directory))
          (default-directory root)
          (search-mode (or mode "content")))
     ;; Message the user so they know search is happening
@@ -203,42 +210,31 @@ File paths may be absolute or relative. Relative paths are resolved against the 
 ;;; System Prompts
 
 (defvar gptel-agents--context-builder-system
-  "You are a context-building assistant. Your ONLY task is to analyze the user's request and use the =context_manager= tool to add relevant files to the conversation context.
+  "You are a context-building assistant. Your GOAL is to prepare the conversation context by adding relevant files.
 
-IMPORTANT RULES:
-1. Do NOT attempt to answer the user's question or provide any code solutions.
-2. Do NOT engage in conversation beyond acknowledging what files you are adding.
-3. Your ONLY action should be calling the =context_manager= tool with operation 'add' or 'replace'.
-4. Analyze the user's request to determine which files from the project would be necessary to answer their question.
-5. After making the tool call, provide a brief summary of what files were added and why.
-6. If you do not know the location of a file or definition, use the =search_project= tool to find it.
+INSTRUCTIONS:
+1. Analyze the user's request to identify which files are necessary.
+2. Use =search_project= to find files if needed.
+3. Use =context_manager= to add or replace files.
+4. CRITICAL: Once you have added the necessary files, STOP calling tools.
+5. When finished, respond with a summary and the text \"Context ready.\"
+6. Do NOT attempt to answer the user's question.
+7. Do NOT loop. If you have the core files, you are done.
 
-You have access to project documentation and file trees. Use these to identify:
-- Source files directly related to the user's question
-- Configuration files if relevant
-- Type definitions or interfaces if working with typed code
-- Test files if the question involves testing
-- Related utility or helper files
-
-Be thorough but selective - include files that are necessary, not every tangentially related file."
+Use project documentation/file trees to identify relevant files. Be selective."
   "System prompt for context-building agents.
 These agents only add files to context and do not answer questions.")
 
 (defvar gptel-agents--context-management-instructions
-  "
-Context Management:*
-You have access to a =context_manager= tool that allows you to manage the files included in this conversation's context.
+  "Context Management:
+You have a =context_manager= tool to manage file context.
 
--   Use =context_manager= with operation 'add' when you need additional files to understand or complete a task.
--   Use =context_manager= with operation 'remove' to remove files that are no longer relevant.
--   Use =context_manager= with operation 'replace' to completely reset the context to a specific set of files.
+- Use 'add' ONLY if missing critical files.
+- Use 'remove' to clean up.
+- Use 'replace' to reset.
 
-When to manage context:
--   If you need to see a file that was referenced but not provided, use 'add' to request it.
--   If the user asks you to work on a different part of the codebase, consider using 'replace' to focus on relevant files.
--   If context becomes cluttered with irrelevant files, use 'remove' to clean it up.
-
-Always explain to the user when you are modifying the context and why."
+IMPORTANT: If you use =context_manager=, STOP immediately after the tool call.
+ Do not continue generating text or calling more tools. Wait for the next user turn."
   "Instructions for agents on how to use the context_manager tool.
 This is appended to system prompts that should have context management capability.")
 
@@ -251,8 +247,7 @@ This is appended to system prompts that should have context management capabilit
     :model 'gemini-flash-lite-latest
     :tools (list (gptel-get-tool "context_manager")
                  (gptel-get-tool "search_project"))
-    :context '("/Users/claymorton/developer/clarify-api/llm-docs/CLARIFY_IQ_BACKEND_CONTEXT.md"
-               "/Users/claymorton/developer/clarify-api/llm-docs/file-tree.md")
+    :context '("/Users/claymorton/developer/clarify-api/AGENTS.md")
     :system gptel-agents--context-builder-system)
 
   (gptel-make-preset 'clarify-ui-build-context
@@ -260,8 +255,7 @@ This is appended to system prompts that should have context management capabilit
     :model 'gemini-flash-lite-latest
     :tools (list (gptel-get-tool "context_manager")
                  (gptel-get-tool "search_project"))
-    :context '("/Users/claymorton/developer/clarify-ui/llm-docs/CLARIFY_IQ_LLM_CONTEXT.md"
-               "/Users/claymorton/developer/clarify-ui/llm-docs/file-tree.md")
+    :context '("/Users/claymorton/developer/clarify-ui/AGENTS.md")
     :system gptel-agents--context-builder-system)
 
   (gptel-make-preset 'clarify-fullstack-build-context
@@ -269,10 +263,7 @@ This is appended to system prompts that should have context management capabilit
     :model 'gemini-flash-lite-latest
     :tools (list (gptel-get-tool "context_manager")
                  (gptel-get-tool "search_project"))
-    :context '("/Users/claymorton/developer/clarify-api/llm-docs/CLARIFY_IQ_BACKEND_CONTEXT.md"
-               "/Users/claymorton/developer/clarify-api/llm-docs/file-tree.md"
-               "/Users/claymorton/developer/clarify-ui/llm-docs/CLARIFY_IQ_LLM_CONTEXT.md"
-               "/Users/claymorton/developer/clarify-ui/llm-docs/file-tree.md")
+    :context '("/Users/claymorton/developer/clarify/AGENTS.md")
     :system gptel-agents--context-builder-system))
 
 (provide 'gptel-agents)
