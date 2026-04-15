@@ -44,23 +44,22 @@
 
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
-;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
+;; `with-eval-after-load' block, otherwise Doom's defaults may override your
+;; settings. E.g.
 ;;
-;;   (after! PACKAGE
+;;   (with-eval-after-load 'PACKAGE
 ;;     (setq x y))
 ;;
 ;; The exceptions to this rule:
 ;;
 ;;   - Setting file/directory variables (like `org-directory')
 ;;   - Setting variables which explicitly tell you to set them before their
-;;     package is loaded (see 'C-h v VARIABLE' to look up their documentation).
+;;     package is loaded (see 'C-h v VARIABLE' to look them up).
 ;;   - Setting doom variables (which start with 'doom-' or '+').
 ;;
 ;; Here are some additional functions/macros that will help you configure Doom.
 ;;
 ;; - `load!' for loading external *.el files relative to this one
-;; - `use-package!' for configuring packages
-;; - `after!' for running code after a package has loaded
 ;; - `add-load-path!' for adding directories to the `load-path', relative to
 ;;   this file. Emacs searches the `load-path' when you load packages with
 ;;   `require' or `use-package'.
@@ -74,14 +73,31 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+;;
 
 
+(require 'acp)
+(require 'agent-shell)
+(require 'transient)
+(setq! transient-show-common-commands t)
 
 (map! :leader
       :desc "Open like spacemacs" "SPC" #'execute-extended-command)
 
 
 (add-hook 'window-setup-hook #'toggle-frame-maximized)
+
+(setq mouse-wheel-tilt-scroll t)
+
+;; Force most buffers to open in the current window by default
+(setq display-buffer-base-action
+      '((display-buffer-reuse-window
+         display-buffer-same-window)
+        (reusable-frames . t)))
+
+;; Ensure switch-to-buffer and friends respect display-buffer-alist
+(setq switch-to-buffer-obey-display-actions t)
+(set-popup-rule! ".*" :ignore t)
 
 (setq! evil-escape-excluded-major-modes '())
 
@@ -122,7 +138,7 @@
 ;;  "C-<" #'mc/mark-previous-like-this
 ;;  "M-)" #'sp-unwrap-sexp)
 
-(use-package! evil-multiedit
+(use-package evil-multiedit
   :after evil
   :init
   (map!
@@ -133,7 +149,8 @@
 
 ;; in elisp files like `this'
 ;; in other files like `this` 😜
-(after! smartparens
+
+(with-eval-after-load 'smartparens
   (sp-pair "`" "`" :wrap "M-`")
   (sp-pair "[" "]" :wrap "M-[")
   (sp-pair "{" "}" :wrap "M-{")
@@ -174,12 +191,12 @@
 (setq evil-escape-unordered-key-sequence t)
 
 (dolist (mode '(org-mode-hook
-                    term-mode-hook
-                    vterm-mode-hook
-                    shell-mode-hook
-                   treemacs-mode-hook
-                    eshell-mode-hook))
-      (add-hook mode (lambda() (display-line-numbers-mode 0))))
+                term-mode-hook
+                vterm-mode-hook
+                shell-mode-hook
+                treemacs-mode-hook
+                eshell-mode-hook))
+  (add-hook mode (lambda() (display-line-numbers-mode 0))))
 
 
 ;; Eglot      ------>
@@ -197,10 +214,10 @@
               (when win
                 (set-window-dedicated-p win t)))))
 
-;; Set Flycheck to open at the bottom without affecting other windows
+;; Set Flycheck to open below the current window (splits current window)
 (add-to-list 'display-buffer-alist
              '("^\\*Flycheck errors\\*$"
-               (display-buffer-reuse-window display-buffer-at-bottom)
+               (display-buffer-reuse-window display-buffer-below-selected)
                (window-height . 0.3)))
 
 
@@ -259,10 +276,7 @@
 (add-hook 'rust-mode-hook (setq rustic-cargo-test-disable-warnings t))
 
 ;; TYPESCRIPT  ------->
-(setq tide-format-options
-      '(:indentSize 2
-        :tabSize    2))
-
+;;
 ;; 1) When you open a .ts file, disable electric-indent
 (add-hook! 'typescript-mode-hook
   (electric-indent-local-mode -1))
@@ -273,6 +287,16 @@
     (electric-indent-local-mode -1)))
 
 
+;; CLOJURE ----->
+
+(map! :after clojure-mode
+      :map clojure-mode-map
+      :n "<leader> c d" #'evil-goto-definition)
+
+(use-package! jarchive
+  :config
+  (jarchive-mode 1))
+
 ;; TREEMACS ---->
 (after! treemacs
   (setq treemacs-show-cursor t)
@@ -281,8 +305,16 @@
 
 
 ;; GPTEL ---->
+(with-eval-after-load 'gptel
+     (add-hook 'gptel-mode-hook
+               (lambda ()
+                 (setq-local gptel-context nil))))
 
-(setq! gptel-context-restrict-to-project-files nil)
+;; Default gptel scope to "buffer" in Org files
+(add-hook 'org-mode-hook
+          (lambda ()
+            (setq-local gptel--set-buffer-locally t)))
+
 
 ;; 1. Load the tool definitions BEFORE creating presets that use them
 (load "~/.config/doom/gptel-agents.el")
@@ -294,14 +326,10 @@
   (define-key gptel-mode-map (kbd "<visual-state> RET") nil)
   (message "Disabled gptel-send on RET in gptel-mode-map for Normal and Visual states."))
 
-(use-package! gptel
- :config
- (setq! gptel-api-key (getenv "OPENAI_API_KEY")))
-
 ;; Set Gemini as default
 (after! gptel
   (setq
-   gptel-model 'gemini-2.5-flash
+   gptel-model 'gemini-flash-latest
    gptel-backend (gptel-make-gemini "Gemini"
                    :key (getenv "GEMINI_API_KEY")
                    :stream t))
@@ -310,6 +338,11 @@
 (gptel-make-anthropic "Claude"          ;Any name you want
   :stream t                             ;Streaming responses
   :key (getenv "CLAUDE_API_KEY"))
+
+(gptel-make-openai "ChatGPT"
+  :stream t
+  :key (getenv "OPENAI_API_KEY"))
+
 
 ;; (gptel-make-ollama "Ollama"
 ;;   :host "localhost:11434"
@@ -325,7 +358,36 @@
 
 (after! gptel
   (setq gptel-use-tools t)
-  (setq gptel-include-reasoning nil))
+  (setq gptel-include-reasoning nil)
+  (setq gptel-context-restrict-to-project-files nil)
+
+  (defun my/gptel-indent-source-blocks (beg end)
+    "Indent all Org source blocks in the newly inserted gptel response."
+    (when (derived-mode-p 'org-mode)
+      (save-excursion
+        (goto-char beg)
+        (while (re-search-forward "^[ \t]*#\\+begin_src" end t)
+                (goto-char (match-beginning 0))
+          (let ((element (org-element-at-point)))
+            (when (eq (car element) 'src-block)
+              (save-excursion
+                (goto-char (org-element-property :post-affiliated element))
+                (forward-line 1)
+                (let ((cbeg (point)))
+                  (goto-char (org-element-property :end element))
+                  (when (re-search-backward "^[ \t]*#\\+end_src" cbeg t)
+                    (indent-rigidly cbeg (point) 2))))
+              (goto-char (org-element-property :end element))))))))
+  (add-hook 'gptel-post-response-functions #'my/gptel-indent-source-blocks))
+
+;; Agent Shell ------>
+(setopt agent-shell-show-context-usage-indicator t)
+(setopt agent-shell-show-usage-at-turn-end t)
+(setopt agent-shell-session-strategy 'prompt)
+(setq agent-shell-google-authentication
+      (agent-shell-google-make-authentication
+       :api-key (lambda () (auth-source-pass-get "secret" "GEMINI_API_KEY"))))
+;; ORG ROAM  ------>
 
 (after! org-roam
   ;; 1. Tell Doom's popup system to ignore Org Roam and Capture buffers
@@ -342,7 +404,10 @@
   (setq org-roam-capture-templates
         '(("d" "default" plain "%?"
            :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-           :unnarrowed t))))
+           :unnarrowed t)))
+
+  ;; Force org-roam-node-find to use the current window even if buffer is open elsewhere
+  (setq org-roam-display-functions '(display-buffer-same-window)))
 
 ;; `org-roam-find` open window in current buffer.
 (setq org-link-frame-setup '((vm . vm-visit-folder-other-frame)
@@ -359,11 +424,41 @@
                '("\\.org$"
                  (display-buffer-same-window))))
 
+;; (org-babel-do-load-languages
+;;  'org-babel-load-languages
+;;  '((dot . t))) ; this line activates dot
+
+(after! org
+  (setq org-src-preserve-indentation nil
+        org-src-content-indentation 2)
+  (require 'org-modern)
+  (add-hook 'org-mode-hook #'org-modern-mode)
+  ;; Optional: Customize headline bullets
+  (setq org-modern-star 'replace
+        org-modern-replace-stars '("◉" "○" "✸" "✿" "➤" "◆" "▲" "▼"))
+  )
+
 (defun org-babel-tangle-block()
   (interactive)
   (let ((current-prefix-arg '(4)))
      (call-interactively 'org-babel-tangle)
 ))
+
+(defun my/org-indent-source-block-at-point ()
+  "Indent the contents of the Org source block at point."
+  (interactive)
+  (when (derived-mode-p 'org-mode)
+    (let ((element (org-element-at-point)))
+      (when (eq (car element) 'src-block)
+        (save-excursion
+          (goto-char (org-element-property :post-affiliated element))
+          (forward-line 1)
+          (let ((cbeg (point)))
+            (goto-char (org-element-property :end element))
+            (when (re-search-backward "^[ \t]*#\\+end_src" cbeg t)
+              (indent-rigidly cbeg (point) 2))))
+
+        (message "Indented source block.")))))
 
 (map! :localleader
       :map org-mode-map
@@ -381,45 +476,33 @@
 
 
 ;; https://github.com/daviwil/emacs-from-scratch/blob/1a13fcf0dd6afb41fce71bf93c5571931999fed8/init.el#L206C1-L257C47
-(require 'org-bullets)
-(require 'visual-fill-column)
+;; (require 'visual-fill-column)
 
+(setq org-hide-emphasis-markers t)
+(let* ((variable-tuple
+        (cond
+         ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
+         ((x-list-fonts "Lucida Grande")   '(:font "Lucida Grande"))
+         ((x-list-fonts "Verdana")         '(:font "Verdana"))
+         ((x-list-fonts "ETBembo")         '(:font "ETBembo"))
+         ((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
+         (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
+       ;; (base-font-color     (face-foreground 'default nil 'default))
+       (headline           `(:inherit default :weight bold
+                             ;; :foreground ,base-font-color
+                             )))
 
-;; (setq org-src-fontify-natively t)
-
-;; (setq org-ellipsis " ▾")
-
-(setq org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●"))
-
-
-(require 'org-modern)
-(after! org
-  ;; Load org-modern and enable it in org-mode and agenda
-
-  (add-hook 'org-mode-hook #'org-modern-mode)
-  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
-
-  ;; Appearance customization
-  (setq
-   ;; Headline bullets
-   org-modern-star '("◉" "○" "✿" "✸" "⁖")
-   org-modern-hide-stars nil
-
-   ;; Folding symbol
-   org-ellipsis "…"
-
-   ;; Checklist symbols
-   org-modern-checkbox '((?X . "✔") (?- . "✘") (?\s . "☐"))
-
-   ;; Block and quote appearance
-   org-modern-block-name '("⟦" . "⟧")
-   org-modern-block-fringe nil
-
-   ;; Horizontal rules
-   org-modern-horizontal-rule '(-0.5)
-
-   ;; Hide tag brackets
-   org-modern-tag nil))
+  (custom-theme-set-faces
+   'user
+   `(org-level-8 ((t (,@headline ,@variable-tuple))))
+   `(org-level-7 ((t (,@headline ,@variable-tuple))))
+   `(org-level-6 ((t (,@headline ,@variable-tuple))))
+   `(org-level-5 ((t (,@headline ,@variable-tuple))))
+   `(org-level-4 ((t (,@headline ,@variable-tuple :height 1.1))))
+   `(org-level-3 ((t (,@headline ,@variable-tuple :height 1.25))))
+   `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.5))))
+   `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.75))))
+   `(org-document-title ((t (,@headline ,@variable-tuple :height 2.0 :underline nil))))))
 
 (defun clm-org-mode-visual-fill ()
   (setq visual-fill-column-width 100
@@ -496,3 +579,18 @@
 ;; Terraform/OpenTofu ------>>>>
 
 (setq! terraform-command "tofu")
+
+
+;; Markdown-mode   --------->>>>
+
+(after! grip-mode
+  (setq grip-command 'go-grip
+        grip-preview-in-webkit t
+        grip-sleep-time 3))
+
+(load! "org-gfm-preview")
+(map! :localleader
+      :map org-mode-map
+      "m p" #'org-gfm-preview-toggle
+      "m e" #'org-gfm-preview-execute)
+

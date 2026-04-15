@@ -22,6 +22,7 @@
 (require 'gptel)
 (require 'gptel-context)
 (require 'project)
+(require 'cl-lib)
 
 (defgroup gptel-agents nil
   "Agent presets and tools for gptel."
@@ -29,18 +30,57 @@
 
 ;;; Context Manager Tool
 
+(defcustom gptel-agents-project-root-fallback nil
+  "Fallback project root for gptel agent tools.
+
+If non-nil, should be a directory path.  This is used when a project
+cannot be detected via =project-current'."
+  :group 'gptel-agents
+  :type '(choice (const :tag "None" nil)
+                 (directory :tag "Directory")))
+
+(defun gptel-agents--project-root (&optional buffer)
+  "Return the project root for BUFFER, or nil if none can be detected."
+  (with-current-buffer (or buffer (current-buffer))
+    (let ((proj (project-current nil)))
+      (cond
+       (proj (expand-file-name (project-root proj)))
+       ((and gptel-agents-project-root-fallback
+             (file-directory-p gptel-agents-project-root-fallback))
+        (expand-file-name gptel-agents-project-root-fallback))
+       (t nil)))))
+
+(defun gptel-agents--normalize-context-path (path &optional buffer)
+  "Normalize PATH for adding/removing context in BUFFER.
+
+If PATH is absolute, return it expanded.
+If PATH is relative and a project root can be determined, expand it
+relative to that root.  Otherwise expand relative to BUFFER's
+=default-directory'."
+  (let* ((buf (or buffer (current-buffer)))
+         (root (gptel-agents--project-root buf)))
+    (cond
+     ((not (stringp path)) path)
+     ((file-name-absolute-p path) (expand-file-name path))
+     (root (expand-file-name path root))
+     (t (with-current-buffer buf (expand-file-name path))))))
+
 (defun gptel-agents--context-add-files (files &optional buffer)
   "Add FILES to the gptel context for BUFFER.
 FILES is a list of file paths. BUFFER defaults to current buffer."
   (let ((buf (or buffer (current-buffer)))
         (added-count 0))
     (dolist (file files)
-      (let ((expanded (expand-file-name file)))
+      (let* ((expanded (gptel-agents--normalize-context-path file buf))
+             (root (gptel-agents--project-root buf)))
         (if (file-exists-p expanded)
             (progn
               (gptel-context-add-file expanded buf)
               (cl-incf added-count))
-          (message "gptel-agents: File not found: %s" file))))
+          (message "gptel-agents: File not found: %s (expanded to %s%s)"
+                   file
+                   expanded
+                   (if root (format ", root %s" root) "")))))
     (format "Added %d file(s) to context." added-count)))
 
 (defun gptel-agents--context-remove-files (files &optional buffer)
@@ -50,7 +90,7 @@ FILES is a list of file paths. BUFFER defaults to current buffer."
         (removed-count 0))
     (with-current-buffer buf
       (dolist (file files)
-        (let ((expanded (expand-file-name file)))
+        (let ((expanded (gptel-agents--normalize-context-path file buf)))
           ;; Find and remove matching context entries
           (setq gptel-context
                 (cl-remove-if
@@ -148,7 +188,7 @@ Operations:
 - 'remove': Remove the specified files from the context
 - 'replace': Clear all existing context and set it to only the specified files
 
-File paths should be absolute paths. The tool will report how many files were successfully processed."
+File paths may be absolute or relative. Relative paths are resolved against the current project root if available. The tool will report how many files were successfully processed."
  :args '((:name "operation"
           :type string
           :description "The operation to perform: 'add', 'remove', or 'replace'"
